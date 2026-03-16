@@ -9,6 +9,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         menuBarController = MenuBarController()
         SchedulerService.shared.start()
+        Task {
+            await NotificationService.shared.requestPermission()
+        }
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(openMainWindow),

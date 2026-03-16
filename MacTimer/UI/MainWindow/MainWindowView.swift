@@ -36,9 +36,3 @@ struct MainWindowView: View {
     }
 }
 
-// Stub — will be replaced in Task 10
-struct TaskEditorView: View {
-    let task: TaskItem?
-    let onDismiss: () -> Void
-    var body: some View { Text("Editor — Coming Soon") }
-}

@@ -32,6 +32,9 @@
 		FF00000000000000000000A1 /* MainWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF00000000000000000000B1 /* MainWindowView.swift */; };
 		FF00000000000000000000A2 /* TaskListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF00000000000000000000B2 /* TaskListView.swift */; };
 		FF00000000000000000000A3 /* ArrayExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF00000000000000000000B3 /* ArrayExtensions.swift */; };
+		FF00000000000000000000A4 /* TaskEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF00000000000000000000B4 /* TaskEditorView.swift */; };
+		FF00000000000000000000A5 /* ScheduleEditorSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF00000000000000000000B5 /* ScheduleEditorSection.swift */; };
+		FF00000000000000000000A6 /* PayloadEditorSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF00000000000000000000B6 /* PayloadEditorSection.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -61,6 +64,9 @@
 		FF00000000000000000000B1 /* MainWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowView.swift; sourceTree = "<group>"; };
 		FF00000000000000000000B2 /* TaskListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskListView.swift; sourceTree = "<group>"; };
 		FF00000000000000000000B3 /* ArrayExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArrayExtensions.swift; sourceTree = "<group>"; };
+		FF00000000000000000000B4 /* TaskEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskEditorView.swift; sourceTree = "<group>"; };
+		FF00000000000000000000B5 /* ScheduleEditorSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleEditorSection.swift; sourceTree = "<group>"; };
+		FF00000000000000000000B6 /* PayloadEditorSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PayloadEditorSection.swift; sourceTree = "<group>"; };
 		AA00000000000000000000A1 /* MacTimer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacTimer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA00000000000000000000A2 /* MacTimerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacTimerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA00000000000000000000A3 /* MacTimerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacTimerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -184,6 +190,7 @@
 			children = (
 				EE000000000000000000AA02 /* MenuBar */,
 				FF00000000000000000000C1 /* MainWindow */,
+				FF00000000000000000000C2 /* Editor */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -212,6 +219,16 @@
 				FF00000000000000000000B3 /* ArrayExtensions.swift */,
 			);
 			path = Extensions;
+			sourceTree = "<group>";
+		};
+		FF00000000000000000000C2 /* Editor */ = {
+			isa = PBXGroup;
+			children = (
+				FF00000000000000000000B4 /* TaskEditorView.swift */,
+				FF00000000000000000000B5 /* ScheduleEditorSection.swift */,
+				FF00000000000000000000B6 /* PayloadEditorSection.swift */,
+			);
+			path = Editor;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -344,6 +361,9 @@
 				FF00000000000000000000A1 /* MainWindowView.swift in Sources */,
 				FF00000000000000000000A2 /* TaskListView.swift in Sources */,
 				FF00000000000000000000A3 /* ArrayExtensions.swift in Sources */,
+				FF00000000000000000000A4 /* TaskEditorView.swift in Sources */,
+				FF00000000000000000000A5 /* ScheduleEditorSection.swift in Sources */,
+				FF00000000000000000000A6 /* PayloadEditorSection.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
