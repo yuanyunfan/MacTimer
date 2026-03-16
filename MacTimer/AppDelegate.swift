@@ -44,7 +44,3 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-// Stub — will be replaced in Task 9
-struct MainWindowView: View {
-    var body: some View { Text("Main Window — Coming Soon") }
-}
