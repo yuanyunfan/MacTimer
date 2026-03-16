@@ -1,12 +1,6 @@
 import CoreData
 import Foundation
 
-enum ExecutionResult: String, Codable {
-    case success
-    case failure
-    case timeout
-}
-
 @objc(ExecutionLogItem)
 public class ExecutionLogItem: NSManagedObject {}
 
