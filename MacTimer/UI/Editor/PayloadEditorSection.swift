@@ -62,7 +62,11 @@ struct PayloadEditorSection: View {
         panel.prompt = "选择"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         let bundle = Bundle(url: url)
-        payload.bundleID = bundle?.bundleIdentifier
+        guard let bundleID = bundle?.bundleIdentifier else {
+            // App has no bundle identifier — can't be used as an openApp target.
+            return
+        }
+        payload.bundleID = bundleID
         payload.appDisplayName = url.deletingPathExtension().lastPathComponent
     }
 }

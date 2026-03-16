@@ -76,7 +76,9 @@ final class TaskExecutor {
             DispatchQueue.global().asyncAfter(deadline: .now() + timeoutSeconds) {
                 if process.isRunning {
                     process.terminate()
-                    timedOut = true  // 仅在真正触发 terminate 时标记
+                    // Protect timedOut write under outputLock to avoid data race
+                    // with the read that occurs after waitUntilExit() returns.
+                    outputLock.lock(); timedOut = true; outputLock.unlock()
                 }
                 resume(with: false)
             }
@@ -88,7 +90,9 @@ final class TaskExecutor {
         }
 
         let duration = Date().timeIntervalSince(start)
-        if timedOut {
+        // Read timedOut under outputLock to avoid data race with the timeout closure.
+        outputLock.lock(); let didTimeout = timedOut; outputLock.unlock()
+        if didTimeout {
             return ExecutionOutcome(result: .timeout,
                                    errorMessage: "执行超时（超过 \(Int(timeoutSeconds)) 秒）",
                                    duration: duration)

@@ -69,6 +69,9 @@ final class SchedulerService: ObservableObject {
         Task { @MainActor [weak self] in
             guard let self else { return }
             let outcome = await TaskExecutor.shared.execute(task: task, taskName: task.name)
+            // Guard against use-after-free: the task could have been deleted
+            // during the await gap above.
+            guard !task.isDeleted, !task.isFault else { return }
             self.recordLog(task: task, outcome: outcome)
             task.lastRunAt = Date()
             if outcome.result != .success {
