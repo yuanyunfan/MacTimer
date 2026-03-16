@@ -4,6 +4,8 @@ import Foundation
 @objc(TaskItem)
 public class TaskItem: NSManagedObject {}
 
+extension TaskItem: Identifiable {}
+
 extension TaskItem {
     @NSManaged public var id: UUID
     @NSManaged public var name: String

@@ -13,6 +13,7 @@ struct TaskListView: View {
     ) private var tasks: FetchedResults<TaskItem>
 
     @State private var selection: Set<TaskItem> = [] // for future batch operations
+    @State private var loggingTask: TaskItem?
 
     var body: some View {
         Table(tasks, selection: $selection) {
@@ -77,6 +78,12 @@ struct TaskListView: View {
                 HStack(spacing: 4) {
                     Button("编辑") { onEdit(task) }
                         .buttonStyle(.borderless)
+                    Button {
+                        showLog(task)
+                    } label: {
+                        Image(systemName: "list.bullet.rectangle")
+                    }
+                    .buttonStyle(.borderless)
                     Button(role: .destructive) {
                         deleteTask(task)
                     } label: {
@@ -85,7 +92,7 @@ struct TaskListView: View {
                     .buttonStyle(.borderless)
                 }
             }
-            .width(70)
+            .width(90)
         }
         .contextMenu(forSelectionType: TaskItem.self) { items in
             if let task = items.first {
@@ -94,6 +101,14 @@ struct TaskListView: View {
                 Button("删除", role: .destructive) { deleteTask(task) }
             }
         }
+        .sheet(item: $loggingTask) { task in
+            ExecutionLogView(taskID: task.id, taskName: task.name)
+                .environment(\.managedObjectContext, context)
+        }
+    }   // end of `var body`
+
+    private func showLog(_ task: TaskItem) {
+        loggingTask = task
     }
 
     private func deleteTask(_ task: TaskItem) {

@@ -35,6 +35,7 @@
 		FF00000000000000000000A4 /* TaskEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF00000000000000000000B4 /* TaskEditorView.swift */; };
 		FF00000000000000000000A5 /* ScheduleEditorSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF00000000000000000000B5 /* ScheduleEditorSection.swift */; };
 		FF00000000000000000000A6 /* PayloadEditorSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF00000000000000000000B6 /* PayloadEditorSection.swift */; };
+		FF00000000000000000000A7 /* ExecutionLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF00000000000000000000B7 /* ExecutionLogView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -67,6 +68,7 @@
 		FF00000000000000000000B4 /* TaskEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskEditorView.swift; sourceTree = "<group>"; };
 		FF00000000000000000000B5 /* ScheduleEditorSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleEditorSection.swift; sourceTree = "<group>"; };
 		FF00000000000000000000B6 /* PayloadEditorSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PayloadEditorSection.swift; sourceTree = "<group>"; };
+		FF00000000000000000000B7 /* ExecutionLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExecutionLogView.swift; sourceTree = "<group>"; };
 		AA00000000000000000000A1 /* MacTimer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacTimer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA00000000000000000000A2 /* MacTimerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacTimerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA00000000000000000000A3 /* MacTimerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacTimerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -209,6 +211,7 @@
 			children = (
 				FF00000000000000000000B1 /* MainWindowView.swift */,
 				FF00000000000000000000B2 /* TaskListView.swift */,
+				FF00000000000000000000B7 /* ExecutionLogView.swift */,
 			);
 			path = MainWindow;
 			sourceTree = "<group>";
@@ -364,6 +367,7 @@
 				FF00000000000000000000A4 /* TaskEditorView.swift in Sources */,
 				FF00000000000000000000A5 /* ScheduleEditorSection.swift in Sources */,
 				FF00000000000000000000A6 /* PayloadEditorSection.swift in Sources */,
+				FF00000000000000000000A7 /* ExecutionLogView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
