@@ -41,13 +41,27 @@ struct ScheduleEditorSection: View {
             HStack {
                 Text("时刻").font(.caption).foregroundStyle(.secondary)
                 Spacer()
-                Stepper(
-                    String(format: "%02d:%02d",
-                           schedule.fixedTime?.hour ?? 9,
-                           schedule.fixedTime?.minute ?? 0),
-                    onIncrement: { incrementMinute(1) },
-                    onDecrement: { incrementMinute(-1) }
-                )
+                HStack(spacing: 4) {
+                    TextField("", value: Binding(
+                        get: { schedule.fixedTime?.hour ?? 9 },
+                        set: { setHour($0) }
+                    ), format: .number)
+                    .frame(width: 44)
+                    .textFieldStyle(.roundedBorder)
+                    .multilineTextAlignment(.center)
+
+                    Text("时").font(.caption).foregroundStyle(.secondary)
+
+                    TextField("", value: Binding(
+                        get: { schedule.fixedTime?.minute ?? 0 },
+                        set: { setMinute($0) }
+                    ), format: .number)
+                    .frame(width: 44)
+                    .textFieldStyle(.roundedBorder)
+                    .multilineTextAlignment(.center)
+
+                    Text("分").font(.caption).foregroundStyle(.secondary)
+                }
             }
         }
     }
@@ -96,18 +110,19 @@ struct ScheduleEditorSection: View {
         schedule.fixedTime = FixedTimeConfig(weekdays: weekdays, hour: hour, minute: minute)
     }
 
-    private func incrementMinute(_ delta: Int) {
-        let hour = schedule.fixedTime?.hour ?? 9
-        let minute = schedule.fixedTime?.minute ?? 0
-        var totalMinutes = hour * 60 + minute + delta
-        // Wrap around 24 hours
-        totalMinutes = ((totalMinutes % 1440) + 1440) % 1440
-        let newHour = totalMinutes / 60
-        let newMinute = totalMinutes % 60
+    private func setHour(_ value: Int) {
         schedule.fixedTime = FixedTimeConfig(
             weekdays: schedule.fixedTime?.weekdays ?? [1],
-            hour: newHour,
-            minute: newMinute
+            hour: max(0, min(23, value)),
+            minute: schedule.fixedTime?.minute ?? 0
+        )
+    }
+
+    private func setMinute(_ value: Int) {
+        schedule.fixedTime = FixedTimeConfig(
+            weekdays: schedule.fixedTime?.weekdays ?? [1],
+            hour: schedule.fixedTime?.hour ?? 9,
+            minute: max(0, min(59, value))
         )
     }
 }
