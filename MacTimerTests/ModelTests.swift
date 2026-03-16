@@ -27,3 +27,33 @@ final class ScheduleConfigTests: XCTestCase {
         XCTAssertEqual(decoded.interval?.seconds, 3600)
     }
 }
+
+final class TaskItemPersistenceTests: XCTestCase {
+    var context: NSManagedObjectContext!
+
+    override func setUp() {
+        super.setUp()
+        context = PersistenceController(inMemory: true).container.viewContext
+    }
+
+    func test_taskItem_savesAndFetchesPayload() throws {
+        let item = TaskItem(context: context)
+        item.id = UUID()
+        item.name = "Test Task"
+        item.isEnabled = true
+        item.taskTypeRaw = TaskType.notification.rawValue
+        item.createdAt = Date()
+        item.payload = TaskPayload(notificationTitle: "Hello", notificationBody: "World")
+        item.schedule = ScheduleConfig(
+            type: .interval,
+            fixedTime: nil,
+            interval: IntervalConfig(seconds: 300, startImmediately: false)
+        )
+        try context.save()
+
+        let fetched = try context.fetch(TaskItem.fetchRequest()).first
+        XCTAssertNotNil(fetched)
+        XCTAssertEqual(fetched?.payload.notificationTitle, "Hello")
+        XCTAssertEqual(fetched?.schedule.interval?.seconds, 300)
+    }
+}

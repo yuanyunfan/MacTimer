@@ -16,6 +16,9 @@
 		AA0000000000000000000007 /* TaskType.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000108 /* TaskType.swift */; };
 		AA0000000000000000000008 /* Schedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000109 /* Schedule.swift */; };
 		AA0000000000000000000009 /* ModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000010A /* ModelTests.swift */; };
+		AA000000000000000000000A /* PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000010B /* PersistenceController.swift */; };
+		AA000000000000000000000B /* TaskItem+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000010C /* TaskItem+Extensions.swift */; };
+		AA000000000000000000000C /* ExecutionLogItem+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000010D /* ExecutionLogItem+Extensions.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,6 +32,9 @@
 		AA0000000000000000000108 /* TaskType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskType.swift; sourceTree = "<group>"; };
 		AA0000000000000000000109 /* Schedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Schedule.swift; sourceTree = "<group>"; };
 		AA000000000000000000010A /* ModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelTests.swift; sourceTree = "<group>"; };
+		AA000000000000000000010B /* PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceController.swift; sourceTree = "<group>"; };
+		AA000000000000000000010C /* TaskItem+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskItem+Extensions.swift"; sourceTree = "<group>"; };
+		AA000000000000000000010D /* ExecutionLogItem+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ExecutionLogItem+Extensions.swift"; sourceTree = "<group>"; };
 		AA00000000000000000000A1 /* MacTimer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacTimer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA00000000000000000000A2 /* MacTimerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacTimerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA00000000000000000000A3 /* MacTimerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacTimerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -78,6 +84,7 @@
 				AA0000000000000000000104 /* MacTimer.xcdatamodeld */,
 				AA0000000000000000000107 /* Info.plist */,
 				AA00000000000000000000C5 /* Models */,
+				AA00000000000000000000C6 /* Persistence */,
 			);
 			path = MacTimer;
 			sourceTree = "<group>";
@@ -114,8 +121,18 @@
 			children = (
 				AA0000000000000000000108 /* TaskType.swift */,
 				AA0000000000000000000109 /* Schedule.swift */,
+				AA000000000000000000010C /* TaskItem+Extensions.swift */,
+				AA000000000000000000010D /* ExecutionLogItem+Extensions.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		AA00000000000000000000C6 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				AA000000000000000000010B /* PersistenceController.swift */,
+			);
+			path = Persistence;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -236,6 +253,9 @@
 				AA0000000000000000000004 /* MacTimer.xcdatamodeld in Sources */,
 				AA0000000000000000000007 /* TaskType.swift in Sources */,
 				AA0000000000000000000008 /* Schedule.swift in Sources */,
+				AA000000000000000000000B /* TaskItem+Extensions.swift in Sources */,
+				AA000000000000000000000C /* ExecutionLogItem+Extensions.swift in Sources */,
+				AA000000000000000000000A /* PersistenceController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

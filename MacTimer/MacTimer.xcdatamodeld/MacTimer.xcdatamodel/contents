@@ -1,3 +1,22 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="22522" systemVersion="23F79" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="22758" systemVersion="23F79" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftUI="YES">
+    <entity name="TaskItem" representedClassName="TaskItem" syncable="YES" codeGenerationType="">
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <attribute name="isEnabled" optional="NO" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="taskTypeRaw" optional="NO" attributeType="String"/>
+        <attribute name="taskPayloadJSON" optional="NO" attributeType="String"/>
+        <attribute name="scheduleJSON" optional="NO" attributeType="String"/>
+        <attribute name="lastRunAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="nextRunAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+    </entity>
+    <entity name="ExecutionLogItem" representedClassName="ExecutionLogItem" syncable="YES" codeGenerationType="">
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="taskID" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="executedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="resultRaw" optional="NO" attributeType="String"/>
+        <attribute name="errorMessage" optional="YES" attributeType="String"/>
+        <attribute name="duration" optional="YES" attributeType="Double" usesScalarValueType="YES"/>
+    </entity>
 </model>
