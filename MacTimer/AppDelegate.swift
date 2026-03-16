@@ -3,7 +3,7 @@ import CoreData
 import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate {
-    var menuBarController: MenuBarController?
+    private var menuBarController: MenuBarController?
     private var mainWindowController: NSWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -21,7 +21,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return false
     }
 
-    @objc func openMainWindow() {
+    @objc private func openMainWindow() {
         if mainWindowController == nil {
             let window = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 800, height: 500),

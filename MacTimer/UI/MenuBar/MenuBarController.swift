@@ -2,10 +2,12 @@ import AppKit
 import SwiftUI
 import Combine
 
+@MainActor
 final class MenuBarController {
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
     private var cancellables = Set<AnyCancellable>()
+    private var flashWorkItem: DispatchWorkItem?
 
     init() {
         setupStatusItem()
@@ -52,11 +54,14 @@ final class MenuBarController {
     }
 
     private func flashRedIcon() {
+        flashWorkItem?.cancel()
         statusItem?.button?.image = NSImage(systemSymbolName: "clock.badge.exclamationmark",
                                             accessibilityDescription: "MacTimer Error")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+        let item = DispatchWorkItem { [weak self] in
             self?.statusItem?.button?.image = NSImage(systemSymbolName: "clock",
                                                       accessibilityDescription: "MacTimer")
         }
+        flashWorkItem = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: item)
     }
 }

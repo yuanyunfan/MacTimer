@@ -13,10 +13,9 @@ struct MenuBarView: View {
 
     @FetchRequest(
         sortDescriptors: [],
+        predicate: NSPredicate(format: "isEnabled == NO"),
         animation: .default
-    ) private var allTasks: FetchedResults<TaskItem>
-
-    @State private var showMainWindow = false
+    ) private var disabledTasks: FetchedResults<TaskItem>
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -40,7 +39,7 @@ struct MenuBarView: View {
     private var statsSection: some View {
         HStack(spacing: 16) {
             statItem(label: "运行中", value: enabledTasks.count, color: .green)
-            statItem(label: "已暂停", value: allTasks.count - enabledTasks.count, color: .secondary)
+            statItem(label: "已暂停", value: disabledTasks.count, color: .secondary)
             statItem(label: "今日待执行", value: todayPendingCount, color: .blue)
         }
     }
