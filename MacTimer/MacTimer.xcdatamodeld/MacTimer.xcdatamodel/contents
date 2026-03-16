@@ -17,6 +17,6 @@
         <attribute name="executedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="resultRaw" optional="NO" attributeType="String"/>
         <attribute name="errorMessage" optional="YES" attributeType="String"/>
-        <attribute name="duration" optional="YES" attributeType="Double" usesScalarValueType="YES"/>
+        <attribute name="duration" optional="NO" attributeType="Double" usesScalarValueType="YES"/>
     </entity>
 </model>

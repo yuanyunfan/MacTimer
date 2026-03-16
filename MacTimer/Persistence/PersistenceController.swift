@@ -12,8 +12,12 @@ struct PersistenceController {
         task.name = "早晨提醒"
         task.isEnabled = true
         task.taskTypeRaw = TaskType.notification.rawValue
-        task.taskPayloadJSON = "{}"
-        task.scheduleJSON = "{}"
+        task.payload = TaskPayload(notificationTitle: "早晨提醒", notificationBody: "该起床了！")
+        task.schedule = ScheduleConfig(
+            type: .fixedTime,
+            fixedTime: FixedTimeConfig(weekdays: [1, 2, 3, 4, 5], hour: 9, minute: 0),
+            interval: nil
+        )
         task.createdAt = Date()
         try? context.save()
         return result
