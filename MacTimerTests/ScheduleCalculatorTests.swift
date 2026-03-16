@@ -49,7 +49,7 @@ final class ScheduleCalculatorTests: XCTestCase {
         XCTAssertEqual(comps.minute, 0)
     }
 
-    func test_fixedTime_today_sameTime_returnsNextWeek() {
+    func test_fixedTime_nextDay_returnsTomorrow() {
         // If it's already past today's scheduled time, should jump to next week
         var cal = Calendar(identifier: .gregorian)
         cal.timeZone = TimeZone.current
@@ -68,5 +68,48 @@ final class ScheduleCalculatorTests: XCTestCase {
         let comps = cal.dateComponents([.day], from: next!)
         // Should be Tuesday 2026-03-17
         XCTAssertEqual(comps.day, 17)
+    }
+
+    func test_fixedTime_todayPastTime_returnsNextWeek() {
+        // today = Monday 2026-03-16 at 10:00, target weekday Monday (1), fire time 09:00
+        // Expected: next Monday 2026-03-23 09:00
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone.current
+        let monday = cal.date(from: DateComponents(year: 2026, month: 3, day: 16, hour: 10, minute: 0))!
+        let config = ScheduleConfig(
+            type: .fixedTime,
+            fixedTime: FixedTimeConfig(weekdays: [1], hour: 9, minute: 0), // weekday 1 = Monday
+            interval: nil
+        )
+        let next = ScheduleCalculator.nextRunAt(schedule: config, after: monday)
+        XCTAssertNotNil(next)
+        let comps = cal.dateComponents([.year, .month, .day, .hour, .minute], from: next!)
+        XCTAssertEqual(comps.year, 2026)
+        XCTAssertEqual(comps.month, 3)
+        XCTAssertEqual(comps.day, 23)
+        XCTAssertEqual(comps.hour, 9)
+        XCTAssertEqual(comps.minute, 0)
+    }
+
+    func test_interval_nilConfig_returnsNil() {
+        let config = ScheduleConfig(type: .interval, fixedTime: nil, interval: nil)
+        let result = ScheduleCalculator.nextRunAt(schedule: config, after: Date())
+        XCTAssertNil(result)
+    }
+
+    func test_fixedTime_emptyWeekdays_returnsNil() {
+        let config = ScheduleConfig(
+            type: .fixedTime,
+            fixedTime: FixedTimeConfig(weekdays: [], hour: 9, minute: 0),
+            interval: nil
+        )
+        let result = ScheduleCalculator.nextRunAt(schedule: config, after: Date())
+        XCTAssertNil(result)
+    }
+
+    func test_fixedTime_nilConfig_returnsNil() {
+        let config = ScheduleConfig(type: .fixedTime, fixedTime: nil, interval: nil)
+        let result = ScheduleCalculator.nextRunAt(schedule: config, after: Date())
+        XCTAssertNil(result)
     }
 }

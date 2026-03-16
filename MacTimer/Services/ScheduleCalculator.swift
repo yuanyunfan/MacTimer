@@ -1,6 +1,9 @@
 import Foundation
 
 struct ScheduleCalculator {
+    // covers two full weeks, ensuring every weekday appears at least twice
+    private static let maxLookAheadDays = 14
+
     /// Returns the next Date this schedule should fire after `after`.
     /// `isFirstRun` is used only for interval tasks with startImmediately = true.
     static func nextRunAt(
@@ -20,8 +23,8 @@ struct ScheduleCalculator {
             guard let cfg = schedule.fixedTime, !cfg.weekdays.isEmpty else { return nil }
             var cal = Calendar(identifier: .gregorian)
             cal.timeZone = TimeZone.current
-            // Try to find the next matching weekday within the next 14 days
-            for dayOffset in 0..<14 {
+            // covers two full weeks, ensuring every weekday appears at least twice
+            for dayOffset in 0..<ScheduleCalculator.maxLookAheadDays {
                 let candidate = cal.date(byAdding: .day, value: dayOffset, to: date)!
                 let isoWeekday = cal.component(.weekday, from: candidate)
                 // Calendar.weekday: 1=Sunday, 2=Monday … 7=Saturday
