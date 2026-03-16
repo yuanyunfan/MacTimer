@@ -36,11 +36,30 @@ final class TaskExecutor {
         process.standardOutput = pipe
         process.standardError = pipe
 
+        // C1 / I1: 用 readabilityHandler 异步消费 pipe，防止输出 >64KB 时写端阻塞
+        var outputData = Data()
+        let outputLock = NSLock()
+        pipe.fileHandleForReading.readabilityHandler = { handle in
+            let chunk = handle.availableData
+            if chunk.isEmpty {
+                // EOF：停止监听，释放 FD
+                pipe.fileHandleForReading.readabilityHandler = nil
+            } else {
+                outputLock.lock()
+                outputData.append(chunk)
+                outputLock.unlock()
+            }
+        }
+
         do {
             try process.run()
         } catch {
+            pipe.fileHandleForReading.readabilityHandler = nil
             return ExecutionOutcome(result: .failure, errorMessage: error.localizedDescription, duration: 0)
         }
+
+        // C2: 独立标志，仅在超时路径设置，避免快速失败被误判为 timeout
+        var timedOut = false
 
         let finished = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
             let lock = NSLock()
@@ -55,7 +74,10 @@ final class TaskExecutor {
             }
 
             DispatchQueue.global().asyncAfter(deadline: .now() + timeoutSeconds) {
-                if process.isRunning { process.terminate() }
+                if process.isRunning {
+                    process.terminate()
+                    timedOut = true  // 仅在真正触发 terminate 时标记
+                }
                 resume(with: false)
             }
 
@@ -66,14 +88,15 @@ final class TaskExecutor {
         }
 
         let duration = Date().timeIntervalSince(start)
-        if !finished && process.terminationReason == .uncaughtSignal {
+        if timedOut {
             return ExecutionOutcome(result: .timeout,
                                    errorMessage: "执行超时（超过 \(Int(timeoutSeconds)) 秒）",
                                    duration: duration)
         }
-        if process.terminationStatus != 0 {
-            let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
+        if !finished {
+            outputLock.lock()
             let output = String(data: outputData, encoding: .utf8) ?? "未知错误"
+            outputLock.unlock()
             return ExecutionOutcome(result: .failure, errorMessage: output, duration: duration)
         }
         return ExecutionOutcome(result: .success, errorMessage: nil, duration: duration)
@@ -95,7 +118,8 @@ final class TaskExecutor {
         guard let bundleID = payload.bundleID, !bundleID.isEmpty else {
             return ExecutionOutcome(result: .failure, errorMessage: "未指定 App", duration: 0)
         }
-        guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
+        // I2: NSWorkspace API 必须在主线程调用
+        guard let appURL = await MainActor.run(body: { NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) }) else {
             return ExecutionOutcome(result: .failure,
                                    errorMessage: "找不到 App (Bundle ID: \(bundleID))，请确认 App 已安装",
                                    duration: 0)
