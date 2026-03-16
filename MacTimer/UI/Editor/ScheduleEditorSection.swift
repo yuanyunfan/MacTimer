@@ -97,14 +97,17 @@ struct ScheduleEditorSection: View {
     }
 
     private func incrementMinute(_ delta: Int) {
-        var hour = schedule.fixedTime?.hour ?? 9
-        var minute = (schedule.fixedTime?.minute ?? 0) + delta
-        if minute < 0 { minute = 59; hour = max(0, hour - 1) }
-        if minute >= 60 { minute = 0; hour = min(23, hour + 1) }
+        let hour = schedule.fixedTime?.hour ?? 9
+        let minute = schedule.fixedTime?.minute ?? 0
+        var totalMinutes = hour * 60 + minute + delta
+        // Wrap around 24 hours
+        totalMinutes = ((totalMinutes % 1440) + 1440) % 1440
+        let newHour = totalMinutes / 60
+        let newMinute = totalMinutes % 60
         schedule.fixedTime = FixedTimeConfig(
             weekdays: schedule.fixedTime?.weekdays ?? [1],
-            hour: hour,
-            minute: minute
+            hour: newHour,
+            minute: newMinute
         )
     }
 }

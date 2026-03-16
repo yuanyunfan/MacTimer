@@ -1,34 +1,41 @@
 import SwiftUI
 
+enum EditorMode: Identifiable {
+    case create
+    case edit(TaskItem)
+    var id: String {
+        switch self {
+        case .create: return "create"
+        case .edit(let t): return t.objectID.uriRepresentation().absoluteString
+        }
+    }
+}
+
 struct MainWindowView: View {
     @Environment(\.managedObjectContext) private var context
     @EnvironmentObject private var scheduler: SchedulerService
-    @State private var showingEditor = false
-    @State private var editingTask: TaskItem?
+    @State private var editorMode: EditorMode? = nil
 
     var body: some View {
         TaskListView(
             onEdit: { task in
-                editingTask = task
-                showingEditor = true
+                editorMode = .edit(task)
             }
         )
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
-                    editingTask = nil
-                    showingEditor = true
+                    editorMode = .create
                 } label: {
                     Label("新建任务", systemImage: "plus")
                 }
             }
         }
-        // TODO(Task 10): Replace with .sheet(item: $editingTask) to avoid race condition
-        // when user rapidly switches between edit and new-task modes.
-        .sheet(isPresented: $showingEditor) {
-            TaskEditorView(task: editingTask) {
-                showingEditor = false
-            }
+        .sheet(item: $editorMode) { mode in
+            TaskEditorView(
+                task: { if case .edit(let t) = mode { return t } else { return nil } }(),
+                onDismiss: { editorMode = nil }
+            )
             .environment(\.managedObjectContext, context)
             .environmentObject(scheduler)
         }

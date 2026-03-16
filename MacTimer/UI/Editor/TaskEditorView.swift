@@ -89,9 +89,13 @@ struct TaskEditorView: View {
         item.payload = payload
         item.schedule = schedule
 
-        try? context.save()
-        scheduler.reschedule(task: item)
-        onDismiss()
+        do {
+            try context.save()
+            scheduler.reschedule(task: item)
+            onDismiss()
+        } catch {
+            validationError = "保存失败：\(error.localizedDescription)"
+        }
     }
 
     private func validate() -> String? {
@@ -112,7 +116,8 @@ struct TaskEditorView: View {
                 return "请输入 Shell 命令"
             }
         case .notification:
-            guard let title = payload.notificationTitle, !title.isEmpty else {
+            guard let title = payload.notificationTitle,
+                  !title.trimmingCharacters(in: .whitespaces).isEmpty else {
                 return "请输入通知标题"
             }
         }
