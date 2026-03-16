@@ -27,6 +27,8 @@
 		CC0000000000000000000012 /* TaskExecutorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000113 /* TaskExecutorTests.swift */; };
 		DD0000000000000000000013 /* SchedulerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000114 /* SchedulerService.swift */; };
 		DD0000000000000000000014 /* SchedulerServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0000000000000000000115 /* SchedulerServiceTests.swift */; };
+		EE0000000000000000000015 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE0000000000000000000116 /* MenuBarController.swift */; };
+		EE0000000000000000000016 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE0000000000000000000117 /* MenuBarView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -51,6 +53,8 @@
 		CC0000000000000000000113 /* TaskExecutorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskExecutorTests.swift; sourceTree = "<group>"; };
 		DD0000000000000000000114 /* SchedulerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchedulerService.swift; sourceTree = "<group>"; };
 		DD0000000000000000000115 /* SchedulerServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchedulerServiceTests.swift; sourceTree = "<group>"; };
+		EE0000000000000000000116 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
+		EE0000000000000000000117 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		AA00000000000000000000A1 /* MacTimer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacTimer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA00000000000000000000A2 /* MacTimerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacTimerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA00000000000000000000A3 /* MacTimerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacTimerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -102,6 +106,7 @@
 				AA00000000000000000000C5 /* Models */,
 		AA00000000000000000000C6 /* Persistence */,
 			AA00000000000000000000C7 /* Services */,
+			EE000000000000000000AA01 /* UI */,
 		);
 		path = MacTimer;
 			sourceTree = "<group>";
@@ -165,6 +170,23 @@
 				DD0000000000000000000114 /* SchedulerService.swift */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		EE000000000000000000AA01 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				EE000000000000000000AA02 /* MenuBar */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		EE000000000000000000AA02 /* MenuBar */ = {
+			isa = PBXGroup;
+			children = (
+				EE0000000000000000000116 /* MenuBarController.swift */,
+				EE0000000000000000000117 /* MenuBarView.swift */,
+			);
+			path = MenuBar;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -292,6 +314,8 @@
 				BB000000000000000000000F /* NotificationService.swift in Sources */,
 				CC0000000000000000000011 /* TaskExecutor.swift in Sources */,
 				DD0000000000000000000013 /* SchedulerService.swift in Sources */,
+				EE0000000000000000000015 /* MenuBarController.swift in Sources */,
+				EE0000000000000000000016 /* MenuBarView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

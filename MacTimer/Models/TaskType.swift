@@ -22,6 +22,17 @@ enum ExecutionResult: String, Codable {
     case timeout
 }
 
+extension TaskType {
+    var iconName: String {
+        switch self {
+        case .shellScript:  return "terminal"
+        case .openURL:      return "link"
+        case .openApp:      return "app.badge"
+        case .notification: return "bell"
+        }
+    }
+}
+
 // Payload stored alongside TaskType
 struct TaskPayload: Codable {
     // shellScript
