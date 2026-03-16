@@ -21,6 +21,8 @@
 		AA000000000000000000000C /* ExecutionLogItem+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000010D /* ExecutionLogItem+Extensions.swift */; };
 		AA000000000000000000000D /* ScheduleCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000010E /* ScheduleCalculator.swift */; };
 		AA000000000000000000000E /* ScheduleCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000010F /* ScheduleCalculatorTests.swift */; };
+		BB000000000000000000000F /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000110 /* NotificationService.swift */; };
+		BB0000000000000000000010 /* NotificationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000111 /* NotificationServiceTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,6 +41,8 @@
 		AA000000000000000000010D /* ExecutionLogItem+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ExecutionLogItem+Extensions.swift"; sourceTree = "<group>"; };
 		AA000000000000000000010E /* ScheduleCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleCalculator.swift; sourceTree = "<group>"; };
 		AA000000000000000000010F /* ScheduleCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleCalculatorTests.swift; sourceTree = "<group>"; };
+		BB0000000000000000000110 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		BB0000000000000000000111 /* NotificationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationServiceTests.swift; sourceTree = "<group>"; };
 		AA00000000000000000000A1 /* MacTimer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacTimer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA00000000000000000000A2 /* MacTimerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacTimerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA00000000000000000000A3 /* MacTimerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacTimerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -100,6 +104,7 @@
 				AA0000000000000000000105 /* MacTimerTests.swift */,
 				AA000000000000000000010A /* ModelTests.swift */,
 				AA000000000000000000010F /* ScheduleCalculatorTests.swift */,
+				BB0000000000000000000111 /* NotificationServiceTests.swift */,
 			);
 			path = MacTimerTests;
 			sourceTree = "<group>";
@@ -145,6 +150,7 @@
 			isa = PBXGroup;
 			children = (
 				AA000000000000000000010E /* ScheduleCalculator.swift */,
+				BB0000000000000000000110 /* NotificationService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -271,6 +277,7 @@
 				AA000000000000000000000C /* ExecutionLogItem+Extensions.swift in Sources */,
 				AA000000000000000000000A /* PersistenceController.swift in Sources */,
 				AA000000000000000000000D /* ScheduleCalculator.swift in Sources */,
+				BB000000000000000000000F /* NotificationService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -281,6 +288,7 @@
 				AA0000000000000000000005 /* MacTimerTests.swift in Sources */,
 				AA0000000000000000000009 /* ModelTests.swift in Sources */,
 				AA000000000000000000000E /* ScheduleCalculatorTests.swift in Sources */,
+				BB0000000000000000000010 /* NotificationServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
