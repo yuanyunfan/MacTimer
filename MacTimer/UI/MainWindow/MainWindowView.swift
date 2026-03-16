@@ -23,6 +23,8 @@ struct MainWindowView: View {
                 }
             }
         }
+        // TODO(Task 10): Replace with .sheet(item: $editingTask) to avoid race condition
+        // when user rapidly switches between edit and new-task modes.
         .sheet(isPresented: $showingEditor) {
             TaskEditorView(task: editingTask) {
                 showingEditor = false
@@ -30,7 +32,6 @@ struct MainWindowView: View {
             .environment(\.managedObjectContext, context)
             .environmentObject(scheduler)
         }
-        .navigationTitle("MacTimer")
         .frame(minWidth: 700, minHeight: 400)
     }
 }

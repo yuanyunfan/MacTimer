@@ -12,7 +12,7 @@ struct TaskListView: View {
         animation: .default
     ) private var tasks: FetchedResults<TaskItem>
 
-    @State private var selection: Set<TaskItem> = []
+    @State private var selection: Set<TaskItem> = [] // for future batch operations
 
     var body: some View {
         Table(tasks, selection: $selection) {
@@ -97,8 +97,8 @@ struct TaskListView: View {
     }
 
     private func deleteTask(_ task: TaskItem) {
-        scheduler.reschedule(task: task) // cancel timer first (sets isEnabled=false then reschedules)
         task.isEnabled = false
+        scheduler.reschedule(task: task) // isEnabled=false → cancels timer without re-scheduling
         context.delete(task)
         try? context.save()
     }
@@ -124,8 +124,3 @@ struct TaskListView: View {
     }
 }
 
-extension Array {
-    subscript(safe index: Int) -> Element? {
-        indices.contains(index) ? self[index] : nil
-    }
-}

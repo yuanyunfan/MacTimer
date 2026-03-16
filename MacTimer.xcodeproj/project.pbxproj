@@ -31,6 +31,7 @@
 		EE0000000000000000000016 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE0000000000000000000117 /* MenuBarView.swift */; };
 		FF00000000000000000000A1 /* MainWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF00000000000000000000B1 /* MainWindowView.swift */; };
 		FF00000000000000000000A2 /* TaskListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF00000000000000000000B2 /* TaskListView.swift */; };
+		FF00000000000000000000A3 /* ArrayExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF00000000000000000000B3 /* ArrayExtensions.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -59,6 +60,7 @@
 		EE0000000000000000000117 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		FF00000000000000000000B1 /* MainWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowView.swift; sourceTree = "<group>"; };
 		FF00000000000000000000B2 /* TaskListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskListView.swift; sourceTree = "<group>"; };
+		FF00000000000000000000B3 /* ArrayExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArrayExtensions.swift; sourceTree = "<group>"; };
 		AA00000000000000000000A1 /* MacTimer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacTimer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA00000000000000000000A2 /* MacTimerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacTimerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA00000000000000000000A3 /* MacTimerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacTimerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -111,6 +113,7 @@
 		AA00000000000000000000C6 /* Persistence */,
 			AA00000000000000000000C7 /* Services */,
 			EE000000000000000000AA01 /* UI */,
+			FF00000000000000000000D1 /* Extensions */,
 		);
 		path = MacTimer;
 			sourceTree = "<group>";
@@ -201,6 +204,14 @@
 				FF00000000000000000000B2 /* TaskListView.swift */,
 			);
 			path = MainWindow;
+			sourceTree = "<group>";
+		};
+		FF00000000000000000000D1 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				FF00000000000000000000B3 /* ArrayExtensions.swift */,
+			);
+			path = Extensions;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -332,6 +343,7 @@
 				EE0000000000000000000016 /* MenuBarView.swift in Sources */,
 				FF00000000000000000000A1 /* MainWindowView.swift in Sources */,
 				FF00000000000000000000A2 /* TaskListView.swift in Sources */,
+				FF00000000000000000000A3 /* ArrayExtensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
