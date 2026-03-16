@@ -17,6 +17,22 @@ MacTimer lives in your menu bar and runs tasks on a schedule: send notifications
 
 > Coming soon.
 
+## Installation
+
+### Download (Pre-built)
+
+Download the latest `.dmg` from [Releases](https://github.com/yuanyunfan/MacTimer/releases), mount it, and drag `MacTimer.app` to your `/Applications` folder.
+
+**MacTimer is not notarized by Apple.** macOS will block it on first launch with a message like *"MacTimer cannot be opened because the developer cannot be verified."*
+
+To bypass this, run the following command in Terminal after copying the app to Applications:
+
+> `xattr -cr /Applications/MacTimer.app`
+
+Then double-click to open normally. You only need to do this once.
+
+Alternatively: right-click `MacTimer.app` → **Open** → **Open** in the dialog.
+
 ## Requirements
 
 - macOS 13 Ventura or later
