@@ -2,6 +2,7 @@ import XCTest
 import CoreData
 @testable import MacTimer
 
+@MainActor
 final class SchedulerServiceTests: XCTestCase {
     var context: NSManagedObjectContext!
 

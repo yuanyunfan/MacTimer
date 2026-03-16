@@ -1,6 +1,5 @@
 import Foundation
 import CoreData
-import AppKit
 
 @MainActor
 final class SchedulerService: ObservableObject {
@@ -32,6 +31,7 @@ final class SchedulerService: ObservableObject {
     }
 
     func reschedule(task: TaskItem) {
+        guard !task.isDeleted, !task.isFault else { return }
         cancelTimer(for: task.id)
         if task.isEnabled {
             schedule(task: task, isFirstRun: false)
@@ -66,7 +66,7 @@ final class SchedulerService: ObservableObject {
               task.isEnabled else { return }
 
         // SchedulerService is @MainActor, so the Task body already runs on the main actor.
-        Task { [weak self] in
+        Task { @MainActor [weak self] in
             guard let self else { return }
             let outcome = await TaskExecutor.shared.execute(task: task, taskName: task.name)
             self.recordLog(task: task, outcome: outcome)
@@ -111,7 +111,11 @@ final class SchedulerService: ObservableObject {
 
     private func saveContext() {
         guard context.hasChanges else { return }
-        try? context.save()
+        do {
+            try context.save()
+        } catch {
+            print("[SchedulerService] Failed to save context: \(error)")
+        }
     }
 
     #if DEBUG
