@@ -36,7 +36,6 @@ struct PayloadEditorSection: View {
                     get: { payload.urlString ?? "" },
                     set: { payload.urlString = $0 }
                 ))
-                .textContentType(.URL)
 
             case .openApp:
                 HStack {

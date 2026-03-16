@@ -77,7 +77,7 @@ struct MenuBarView: View {
     private func upcomingRow(task: TaskItem) -> some View {
         HStack {
             Image(systemName: task.taskType.iconName)
-                .foregroundStyle(.accent)
+                .foregroundStyle(Color.accentColor)
                 .frame(width: 16)
             Text(task.name)
                 .font(.caption)

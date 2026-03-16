@@ -23,7 +23,17 @@ struct ExecutionLogView: View {
                 .padding()
 
             if logs.isEmpty {
-                ContentUnavailableView("暂无执行记录", systemImage: "clock")
+                if #available(macOS 14.0, *) {
+                    ContentUnavailableView("暂无执行记录", systemImage: "clock")
+                } else {
+                    VStack {
+                        Spacer()
+                        Text("暂无执行记录")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity)
+                }
             } else {
                 List(logs, id: \.id) { log in
                     HStack(spacing: 12) {

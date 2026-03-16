@@ -12,7 +12,7 @@ struct TaskListView: View {
         animation: .default
     ) private var tasks: FetchedResults<TaskItem>
 
-    @State private var selection: Set<TaskItem> = [] // for future batch operations
+    @State private var selection: Set<UUID> = [] // for future batch operations
     @State private var loggingTask: TaskItem?
 
     var body: some View {
@@ -20,7 +20,7 @@ struct TaskListView: View {
             TableColumn("名称") { task in
                 HStack(spacing: 6) {
                     Image(systemName: task.taskType.iconName)
-                        .foregroundStyle(.accent)
+                        .foregroundStyle(Color.accentColor)
                     Text(task.name)
                         .lineLimit(1)
                 }
@@ -94,8 +94,8 @@ struct TaskListView: View {
             }
             .width(90)
         }
-        .contextMenu(forSelectionType: TaskItem.self) { items in
-            if let task = items.first {
+        .contextMenu(forSelectionType: UUID.self) { ids in
+            if let id = ids.first, let task = tasks.first(where: { $0.id == id }) {
                 Button("编辑") { onEdit(task) }
                 Divider()
                 Button("删除", role: .destructive) { deleteTask(task) }

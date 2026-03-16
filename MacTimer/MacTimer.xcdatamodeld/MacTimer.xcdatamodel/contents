@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="22758" systemVersion="23F79" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftUI="YES">
-    <entity name="TaskItem" representedClassName="TaskItem" syncable="YES" codeGenerationType="">
+    <entity name="TaskItem" representedClassName="TaskItem" syncable="YES">
         <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="name" optional="NO" attributeType="String"/>
         <attribute name="isEnabled" optional="NO" attributeType="Boolean" usesScalarValueType="YES"/>
@@ -11,7 +11,7 @@
         <attribute name="nextRunAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="createdAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
     </entity>
-    <entity name="ExecutionLogItem" representedClassName="ExecutionLogItem" syncable="YES" codeGenerationType="">
+    <entity name="ExecutionLogItem" representedClassName="ExecutionLogItem" syncable="YES">
         <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="taskID" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="executedAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
