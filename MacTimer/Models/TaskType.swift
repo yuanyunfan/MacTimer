@@ -16,6 +16,12 @@ enum TaskType: String, Codable, CaseIterable {
     }
 }
 
+enum ExecutionResult: String, Codable {
+    case success
+    case failure
+    case timeout
+}
+
 // Payload stored alongside TaskType
 struct TaskPayload: Codable {
     // shellScript
