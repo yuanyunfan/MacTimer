@@ -65,12 +65,12 @@ final class SchedulerService: ObservableObject {
         guard let task = (try? context.fetch(request))?.first,
               task.isEnabled else { return }
 
-        // SchedulerService is @MainActor, so the Task body already runs on the main actor.
+        // 记录预定触发时间，用于计算下次执行（避免执行耗时累积导致漂移）
+        let scheduledFireDate = task.nextRunAt ?? Date()
+
         Task { @MainActor [weak self] in
             guard let self else { return }
             let outcome = await TaskExecutor.shared.execute(task: task, taskName: task.name)
-            // Guard against use-after-free: the task could have been deleted
-            // during the await gap above.
             guard !task.isDeleted, !task.isFault else { return }
             self.recordLog(task: task, outcome: outcome)
             task.lastRunAt = Date()
@@ -81,11 +81,39 @@ final class SchedulerService: ObservableObject {
                     message: outcome.errorMessage ?? "未知错误"
                 )
             }
-            // Re-schedule for next run
-            self.schedule(task: task, isFirstRun: false)
+            // 基于预定触发时间计算下次执行，防止时间漂移
+            self.scheduleNext(task: task, afterFireDate: scheduledFireDate)
             self.saveContext()
         }
     }
+
+    /// 基于上次预定触发时间计算下次执行，防止执行耗时导致时间漂移。
+    /// 对于间隔任务：下次 = 上次预定时间 + 间隔（如果已过期则用当前时间兜底）
+    /// 对于固定时间任务：直接用 ScheduleCalculator 从当前时间计算
+    private func scheduleNext(task: TaskItem, afterFireDate: Date) {
+        let now = Date()
+
+        if task.schedule.type == .interval, let cfg = task.schedule.interval {
+            // 基于预定时间计算，避免漂移
+            var nextFire = afterFireDate.addingTimeInterval(TimeInterval(cfg.seconds))
+            // 如果计算出的时间已经过了（例如任务执行超过一个周期），用当前时间兜底
+            if nextFire <= now {
+                nextFire = now.addingTimeInterval(TimeInterval(cfg.seconds))
+            }
+            task.nextRunAt = nextFire
+            saveContext()
+
+            let timer = Timer(fireAt: nextFire, interval: 0, target: self,
+                              selector: #selector(timerFired(_:)), userInfo: task.id, repeats: false)
+            RunLoop.main.add(timer, forMode: .common)
+            activeTimers[task.id] = timer
+        } else {
+            // 固定时间任务：直接复用原有逻辑
+            schedule(task: task, isFirstRun: false)
+        }
+    }
+
+    // MARK: - Logging
 
     private func recordLog(task: TaskItem, outcome: ExecutionOutcome) {
         // Trim logs if over 200

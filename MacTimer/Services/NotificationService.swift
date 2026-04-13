@@ -1,5 +1,8 @@
 import UserNotifications
 import Foundation
+import os.log
+
+private let logger = Logger(subsystem: "com.mactimer.MacTimer", category: "NotificationService")
 
 @MainActor
 final class NotificationService {
@@ -10,10 +13,14 @@ final class NotificationService {
     func requestPermission() async {
         let center = UNUserNotificationCenter.current()
         do {
-            try await center.requestAuthorization(options: [.alert, .sound, .badge])
+            let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
+            logger.info("权限请求结果: granted=\(granted)")
         } catch {
-            print("NotificationService: permission request failed: \(error)")
+            logger.error("权限请求失败: \(error)")
         }
+        let settings = await center.notificationSettings()
+        logger.info("权限状态: \(settings.authorizationStatus.rawValue) (0=未决定 1=拒绝 2=授权 3=临时)")
+        logger.info("Alert: \(settings.alertSetting.rawValue) (0=不支持 1=禁用 2=启用)")
     }
 
     func send(title: String, body: String) async {
@@ -21,13 +28,14 @@ final class NotificationService {
         let request = UNNotificationRequest(
             identifier: UUID().uuidString,
             content: content,
-            trigger: nil  // deliver immediately
+            trigger: nil
         )
         let center = UNUserNotificationCenter.current()
         do {
             try await center.add(request)
+            logger.info("通知已发送: \(title)")
         } catch {
-            print("NotificationService: failed to send notification: \(error)")
+            logger.error("发送通知失败: \(error)")
         }
     }
 

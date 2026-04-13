@@ -30,6 +30,7 @@ final class MenuBarController {
                 .environment(\.managedObjectContext,
                              PersistenceController.shared.container.viewContext)
                 .environmentObject(SchedulerService.shared)
+                .environmentObject(SystemTaskDiscoveryService.shared)
         )
         self.popover = popover
     }

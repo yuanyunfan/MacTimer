@@ -4,6 +4,7 @@ import CoreData
 struct MenuBarView: View {
     @Environment(\.managedObjectContext) private var context
     @EnvironmentObject private var scheduler: SchedulerService
+    @EnvironmentObject private var discovery: SystemTaskDiscoveryService
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \TaskItem.nextRunAt, ascending: true)],
@@ -40,6 +41,7 @@ struct MenuBarView: View {
         HStack(spacing: 16) {
             statItem(label: "运行中", value: enabledTasks.count, color: .green)
             statItem(label: "已暂停", value: disabledTasks.count, color: .secondary)
+            statItem(label: "系统任务", value: discovery.tasks.count, color: .orange)
             statItem(label: "今日待执行", value: todayPendingCount, color: .blue)
         }
     }

@@ -87,6 +87,20 @@ struct TaskEditorView: View {
         item.name = name.trimmingCharacters(in: .whitespaces)
         item.taskType = taskType
         item.payload = payload
+
+        // 调度方式变更时，清除旧的执行记录
+        if !isCreating {
+            let oldSchedule = task?.schedule
+            let scheduleChanged = oldSchedule?.type != schedule.type
+                || oldSchedule?.interval?.seconds != schedule.interval?.seconds
+                || oldSchedule?.fixedTime?.hour != schedule.fixedTime?.hour
+                || oldSchedule?.fixedTime?.minute != schedule.fixedTime?.minute
+                || oldSchedule?.fixedTime?.weekdays != schedule.fixedTime?.weekdays
+            if scheduleChanged {
+                item.lastRunAt = nil
+            }
+        }
+
         item.schedule = schedule
 
         do {

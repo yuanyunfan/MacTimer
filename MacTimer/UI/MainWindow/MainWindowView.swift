@@ -14,6 +14,7 @@ enum EditorMode: Identifiable {
 struct MainWindowView: View {
     @Environment(\.managedObjectContext) private var context
     @EnvironmentObject private var scheduler: SchedulerService
+    @EnvironmentObject private var discovery: SystemTaskDiscoveryService
     @State private var editorMode: EditorMode? = nil
 
     var body: some View {
@@ -38,6 +39,7 @@ struct MainWindowView: View {
             )
             .environment(\.managedObjectContext, context)
             .environmentObject(scheduler)
+            .environmentObject(discovery)
         }
         .frame(minWidth: 700, minHeight: 400)
     }
