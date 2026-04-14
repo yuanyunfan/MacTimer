@@ -262,6 +262,16 @@ struct TaskListView: View {
     private func deleteTask(_ task: TaskItem) {
         task.isEnabled = false
         scheduler.reschedule(task: task)
+
+        // Clean up orphaned ExecutionLogItem records linked by taskID
+        let logRequest = ExecutionLogItem.fetchRequest()
+        logRequest.predicate = NSPredicate(format: "taskID == %@", task.id as CVarArg)
+        if let logs = try? context.fetch(logRequest) {
+            for log in logs {
+                context.delete(log)
+            }
+        }
+
         context.delete(task)
         try? context.save()
     }
