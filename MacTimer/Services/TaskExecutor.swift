@@ -89,9 +89,18 @@ final class TaskExecutor {
                         }
                     }
 
+                    // Close the pipe's read end to prevent FD leak in the timeout path.
+                    try? pipe.fileHandleForReading.close()
+
                     // Protect timedOut write under outputLock to avoid data race
                     // with the read that occurs after waitUntilExit() returns.
                     outputLock.lock(); timedOut = true; outputLock.unlock()
+                } else {
+                    // Process already exited before timeout fired (e.g. quick exit
+                    // with no output). Ensure handler is cleared and FD is closed
+                    // to prevent resource leaks if the EOF was missed.
+                    pipe.fileHandleForReading.readabilityHandler = nil
+                    try? pipe.fileHandleForReading.close()
                 }
                 resume(with: false)
             }
