@@ -1,4 +1,5 @@
 import CoreData
+import AppKit
 
 struct PersistenceController {
     static let shared = PersistenceController()
@@ -30,9 +31,60 @@ struct PersistenceController {
         if inMemory {
             container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
         }
-        container.loadPersistentStores { _, error in
-            if let error { fatalError("CoreData load error: \(error)") }
+        let storeURL = container.persistentStoreDescriptions.first?.url
+        let theContainer = container
+        container.loadPersistentStores { description, error in
+            if let error = error {
+                NSLog("CoreData: failed to load persistent store: \(error)")
+                // Attempt recovery by removing the corrupted store and reloading
+                if let storeURL = storeURL {
+                    PersistenceController.removeStoreFiles(at: storeURL)
+                }
+                theContainer.loadPersistentStores { _, retryError in
+                    if let retryError = retryError {
+                        NSLog("CoreData: failed to load persistent store after reset: \(retryError)")
+                        PersistenceController.showStoreResetFailureAlert(error: retryError)
+                    } else {
+                        NSLog("CoreData: successfully recreated persistent store after removing corrupted data")
+                        PersistenceController.showDataResetAlert()
+                    }
+                }
+            }
         }
         container.viewContext.automaticallyMergesChangesFromParent = true
+    }
+
+    /// Remove the SQLite store file and its companion files (-shm, -wal).
+    private static func removeStoreFiles(at url: URL) {
+        let fileManager = FileManager.default
+        let suffixes = ["", "-shm", "-wal"]
+        for suffix in suffixes {
+            let fileURL = URL(fileURLWithPath: url.path + suffix)
+            try? fileManager.removeItem(at: fileURL)
+        }
+    }
+
+    /// Inform the user that corrupted data was detected and has been reset.
+    private static func showDataResetAlert() {
+        DispatchQueue.main.async {
+            let alert = NSAlert()
+            alert.alertStyle = .warning
+            alert.messageText = "数据已重置"
+            alert.informativeText = "MacTimer 检测到数据文件损坏，已自动重置数据。之前的任务配置已丢失，请重新配置。"
+            alert.addButton(withTitle: "好")
+            alert.runModal()
+        }
+    }
+
+    /// Inform the user that the store could not be recovered at all.
+    private static func showStoreResetFailureAlert(error: Error) {
+        DispatchQueue.main.async {
+            let alert = NSAlert()
+            alert.alertStyle = .critical
+            alert.messageText = "数据加载失败"
+            alert.informativeText = "MacTimer 无法加载或恢复数据文件，应用功能可能受限。请尝试重新启动应用，或联系支持。\n\n错误信息：\(error.localizedDescription)"
+            alert.addButton(withTitle: "好")
+            alert.runModal()
+        }
     }
 }
