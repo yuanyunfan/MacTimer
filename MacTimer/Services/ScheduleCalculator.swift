@@ -61,7 +61,7 @@ struct ScheduleCalculator {
                         continue
                     }
                 }
-                if fireDate >= date {
+                if fireDate > date {
                     return fireDate
                 }
             }
