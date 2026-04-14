@@ -15,6 +15,14 @@ struct ScheduleEditorSection: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
+            .onChange(of: schedule.type) { newType in
+                if newType == .fixedTime && schedule.fixedTime == nil {
+                    schedule.fixedTime = FixedTimeConfig(weekdays: [1, 2, 3, 4, 5], hour: 9, minute: 0)
+                }
+                if newType == .interval && schedule.interval == nil {
+                    schedule.interval = IntervalConfig(seconds: 3600, startImmediately: false)
+                }
+            }
 
             if schedule.type == .fixedTime {
                 fixedTimeFields
