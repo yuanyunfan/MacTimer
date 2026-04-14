@@ -1,5 +1,6 @@
 import Foundation
 import CoreData
+import AppKit
 
 @MainActor
 final class SchedulerService: ObservableObject {
@@ -12,6 +13,9 @@ final class SchedulerService: ObservableObject {
     /// Published so MenuBarView can observe failure state
     @Published var lastFailedTaskName: String?
 
+    /// Tracks whether sleep/wake observers have been registered
+    private var observingSleepWake = false
+
     init(context: NSManagedObjectContext) {
         self.context = context
     }
@@ -20,9 +24,17 @@ final class SchedulerService: ObservableObject {
         let request = TaskItem.fetchRequest()
         request.predicate = NSPredicate(format: "isEnabled == YES")
         let tasks = (try? context.fetch(request)) ?? []
+        let now = Date()
         for task in tasks {
-            schedule(task: task, isFirstRun: true)
+            // Check if this task has a persisted nextRunAt that is in the past,
+            // meaning it was missed (e.g. app was quit or machine was asleep).
+            if let nextRunAt = task.nextRunAt, nextRunAt < now {
+                handleMissedExecution(task: task, missedDate: nextRunAt)
+            } else {
+                schedule(task: task, isFirstRun: true)
+            }
         }
+        registerSleepWakeObservers()
     }
 
     func stop() {
@@ -110,6 +122,70 @@ final class SchedulerService: ObservableObject {
         } else {
             // 固定时间任务：直接复用原有逻辑
             schedule(task: task, isFirstRun: false)
+        }
+    }
+
+    // MARK: - Missed Execution Handling
+
+    /// Handle a task whose nextRunAt is in the past (missed during sleep or app quit).
+    /// Executes the task immediately and then schedules the next run.
+    private func handleMissedExecution(task: TaskItem, missedDate: Date) {
+        cancelTimer(for: task.id)
+        print("[SchedulerService] Missed execution for '\(task.name)' (was due at \(missedDate)), executing now")
+
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            guard !task.isDeleted, !task.isFault, task.isEnabled else { return }
+
+            let outcome = await TaskExecutor.shared.execute(task: task, taskName: task.name)
+            guard !task.isDeleted, !task.isFault else { return }
+
+            self.recordLog(task: task, outcome: outcome)
+            task.lastRunAt = Date()
+
+            if outcome.result != .success {
+                self.lastFailedTaskName = task.name
+                await NotificationService.shared.sendError(
+                    taskName: task.name,
+                    message: outcome.errorMessage ?? "未知错误"
+                )
+            }
+
+            // Schedule the next run from now
+            self.scheduleNext(task: task, afterFireDate: Date())
+            self.saveContext()
+        }
+    }
+
+    // MARK: - Sleep / Wake
+
+    private func registerSleepWakeObservers() {
+        guard !observingSleepWake else { return }
+        observingSleepWake = true
+
+        let wsc = NSWorkspace.shared.notificationCenter
+        wsc.addObserver(
+            self,
+            selector: #selector(handleDidWake(_:)),
+            name: NSWorkspace.didWakeNotification,
+            object: nil
+        )
+    }
+
+    @objc private func handleDidWake(_ notification: Notification) {
+        // After waking from sleep, check all enabled tasks for missed executions.
+        let request = TaskItem.fetchRequest()
+        request.predicate = NSPredicate(format: "isEnabled == YES")
+        let tasks = (try? context.fetch(request)) ?? []
+        let now = Date()
+
+        for task in tasks {
+            if let nextRunAt = task.nextRunAt, nextRunAt < now {
+                // Timer may have already fired (RunLoop fires expired timers on wake),
+                // but if it was invalidated or lost, re-handle it.
+                // Cancel any stale timer and handle the miss.
+                handleMissedExecution(task: task, missedDate: nextRunAt)
+            }
         }
     }
 
