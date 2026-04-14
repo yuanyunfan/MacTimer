@@ -196,14 +196,17 @@ final class SchedulerService: ObservableObject {
 
         let wsc = NSWorkspace.shared.notificationCenter
         wsc.addObserver(
-            self,
-            selector: #selector(handleDidWake(_:)),
-            name: NSWorkspace.didWakeNotification,
-            object: nil
-        )
+            forName: NSWorkspace.didWakeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.handleDidWake()
+            }
+        }
     }
 
-    @objc private func handleDidWake(_ notification: Notification) {
+    private func handleDidWake() {
         // After waking from sleep, check all enabled tasks for missed executions.
         let request = TaskItem.fetchRequest()
         request.predicate = NSPredicate(format: "isEnabled == YES")
