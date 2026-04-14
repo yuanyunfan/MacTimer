@@ -106,11 +106,17 @@ final class TaskExecutor {
         return ExecutionOutcome(result: .success, errorMessage: nil, duration: duration)
     }
 
+    /// Allowed URL schemes for the openURL task type.
+    /// This whitelist is enforced at execution time to prevent malicious schemes
+    /// (e.g. file://, ssh://) injected via CoreData from being opened.
+    private static let allowedURLSchemes: Set<String> = ["http", "https"]
+
     func executeOpenURL(payload: TaskPayload) async -> ExecutionOutcome {
         guard let urlString = payload.urlString,
               let url = URL(string: urlString),
-              url.scheme != nil else {
-            return ExecutionOutcome(result: .failure, errorMessage: "无效的 URL: \(payload.urlString ?? "")", duration: 0)
+              let scheme = url.scheme?.lowercased(),
+              Self.allowedURLSchemes.contains(scheme) else {
+            return ExecutionOutcome(result: .failure, errorMessage: "无效的 URL（仅支持 http/https）: \(payload.urlString ?? "")", duration: 0)
         }
         let opened = await MainActor.run { NSWorkspace.shared.open(url) }
         return ExecutionOutcome(result: opened ? .success : .failure,
