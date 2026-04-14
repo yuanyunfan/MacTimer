@@ -66,14 +66,17 @@ final class SchedulerService: ObservableObject {
         task.nextRunAt = fireDate
         saveContext()
 
-        let timer = Timer(fireAt: fireDate, interval: 0, target: self,
-                          selector: #selector(timerFired(_:)), userInfo: task.id, repeats: false)
+        let taskID = task.id
+        let timer = Timer(fire: fireDate, interval: 0, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.handleTimerFired(taskID: taskID)
+            }
+        }
         RunLoop.main.add(timer, forMode: .common)
         activeTimers[task.id] = timer
     }
 
-    @objc private func timerFired(_ timer: Timer) {
-        guard let taskID = timer.userInfo as? UUID else { return }
+    private func handleTimerFired(taskID: UUID) {
         activeTimers.removeValue(forKey: taskID)
 
         // Guard against duplicate execution (e.g. wake handler already running this task)
@@ -128,8 +131,12 @@ final class SchedulerService: ObservableObject {
             task.nextRunAt = nextFire
             saveContext()
 
-            let timer = Timer(fireAt: nextFire, interval: 0, target: self,
-                              selector: #selector(timerFired(_:)), userInfo: task.id, repeats: false)
+            let taskID = task.id
+            let timer = Timer(fire: nextFire, interval: 0, repeats: false) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.handleTimerFired(taskID: taskID)
+                }
+            }
             RunLoop.main.add(timer, forMode: .common)
             activeTimers[task.id] = timer
         } else {
