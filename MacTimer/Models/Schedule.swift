@@ -17,6 +17,21 @@ struct FixedTimeConfig: Codable {
     var weekdays: [Int]   // e.g. [1, 3, 5]
     var hour: Int         // 0–23
     var minute: Int       // 0–59
+
+    init(weekdays: [Int], hour: Int, minute: Int) {
+        self.weekdays = weekdays
+        self.hour = max(0, min(23, hour))
+        self.minute = max(0, min(59, minute))
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.weekdays = try container.decode([Int].self, forKey: .weekdays)
+        let rawHour = try container.decode(Int.self, forKey: .hour)
+        let rawMinute = try container.decode(Int.self, forKey: .minute)
+        self.hour = max(0, min(23, rawHour))
+        self.minute = max(0, min(59, rawMinute))
+    }
 }
 
 struct IntervalConfig: Codable {
