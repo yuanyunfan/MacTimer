@@ -13,7 +13,7 @@ struct ScheduleCalculator {
     ) -> Date? {
         switch schedule.type {
         case .interval:
-            guard let cfg = schedule.interval else { return nil }
+            guard let cfg = schedule.interval, cfg.seconds >= 60 else { return nil }
             if isFirstRun && cfg.startImmediately {
                 return date
             }

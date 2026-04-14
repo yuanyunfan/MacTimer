@@ -37,6 +37,18 @@ struct FixedTimeConfig: Codable {
 struct IntervalConfig: Codable {
     var seconds: Int      // minimum 60
     var startImmediately: Bool
+
+    init(seconds: Int, startImmediately: Bool) {
+        self.seconds = max(60, seconds)
+        self.startImmediately = startImmediately
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let rawSeconds = try container.decode(Int.self, forKey: .seconds)
+        self.seconds = max(60, rawSeconds)
+        self.startImmediately = try container.decode(Bool.self, forKey: .startImmediately)
+    }
 }
 
 struct ScheduleConfig: Codable {
