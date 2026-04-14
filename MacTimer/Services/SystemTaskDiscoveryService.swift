@@ -248,8 +248,11 @@ final class SystemTaskDiscoveryService: ObservableObject {
         // 生成可读名称：取命令的最后一个路径组件或前 40 字符
         let name = extractCronTaskName(command)
 
-        // id 用行内容的 hash，确保稳定
-        let id = "crontab:\(trimmed.hashValue)"
+        // id 用行内容的确定性 hash（DJB2），确保跨进程启动稳定
+        let stableHash = trimmed.utf8.reduce(into: UInt64(5381)) { hash, byte in
+            hash = ((hash &<< 5) &+ hash) &+ UInt64(byte)
+        }
+        let id = "crontab:\(stableHash)"
 
         return SystemTask(
             id: id,
