@@ -114,7 +114,10 @@ struct MenuBarView: View {
 
     private var todayPendingCount: Int {
         let cal = Calendar.current
-        let endOfDay = cal.startOfDay(for: Date()).addingTimeInterval(86400)
+        let startOfToday = cal.startOfDay(for: Date())
+        guard let endOfDay = cal.date(byAdding: .day, value: 1, to: startOfToday) else {
+            return 0
+        }
         return enabledTasks.filter { task in
             guard let next = task.nextRunAt else { return false }
             return next <= endOfDay
