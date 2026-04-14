@@ -16,6 +16,10 @@ final class SchedulerService: ObservableObject {
     /// Tracks whether sleep/wake observers have been registered
     private var observingSleepWake = false
 
+    /// Tracks task IDs currently being executed to prevent duplicate execution
+    /// (e.g. race between RunLoop-fired timer and wake handler)
+    private var executingTaskIDs: Set<UUID> = []
+
     init(context: NSManagedObjectContext) {
         self.context = context
     }
@@ -72,6 +76,12 @@ final class SchedulerService: ObservableObject {
         guard let taskID = timer.userInfo as? UUID else { return }
         activeTimers.removeValue(forKey: taskID)
 
+        // Guard against duplicate execution (e.g. wake handler already running this task)
+        guard !executingTaskIDs.contains(taskID) else {
+            print("[SchedulerService] Skipping timerFired for task \(taskID): already executing")
+            return
+        }
+
         let request = TaskItem.fetchRequest()
         request.predicate = NSPredicate(format: "id == %@", taskID as CVarArg)
         guard let task = (try? context.fetch(request))?.first,
@@ -80,8 +90,11 @@ final class SchedulerService: ObservableObject {
         // 记录预定触发时间，用于计算下次执行（避免执行耗时累积导致漂移）
         let scheduledFireDate = task.nextRunAt ?? Date()
 
+        executingTaskIDs.insert(taskID)
+
         Task { @MainActor [weak self] in
             guard let self else { return }
+            defer { self.executingTaskIDs.remove(taskID) }
             let outcome = await TaskExecutor.shared.execute(task: task, taskName: task.name)
             guard !task.isDeleted, !task.isFault else { return }
             self.recordLog(task: task, outcome: outcome)
@@ -131,10 +144,21 @@ final class SchedulerService: ObservableObject {
     /// Executes the task immediately and then schedules the next run.
     private func handleMissedExecution(task: TaskItem, missedDate: Date) {
         cancelTimer(for: task.id)
+
+        // Guard against duplicate execution (e.g. RunLoop timer already running this task)
+        guard !executingTaskIDs.contains(task.id) else {
+            print("[SchedulerService] Skipping handleMissedExecution for '\(task.name)': already executing")
+            return
+        }
+
         print("[SchedulerService] Missed execution for '\(task.name)' (was due at \(missedDate)), executing now")
+
+        let taskID = task.id
+        executingTaskIDs.insert(taskID)
 
         Task { @MainActor [weak self] in
             guard let self else { return }
+            defer { self.executingTaskIDs.remove(taskID) }
             guard !task.isDeleted, !task.isFault, task.isEnabled else { return }
 
             let outcome = await TaskExecutor.shared.execute(task: task, taskName: task.name)
