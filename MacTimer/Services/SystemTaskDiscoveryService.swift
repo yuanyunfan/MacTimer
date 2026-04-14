@@ -222,8 +222,9 @@ final class SystemTaskDiscoveryService: ObservableObject {
         // 跳过空行和注释
         guard !trimmed.isEmpty, !trimmed.hasPrefix("#") else { return nil }
 
-        // 处理环境变量设置行（如 SHELL=/bin/bash, PATH=...）
-        if trimmed.contains("=") && !trimmed.contains(" ") {
+        // 处理环境变量设置行（如 SHELL=/bin/bash, PATH=..., CRON_TZ="America/New York"）
+        // Use regex: line starts with a valid identifier followed by '='
+        if trimmed.range(of: #"^[A-Za-z_][A-Za-z0-9_]*="#, options: .regularExpression) != nil {
             return nil
         }
 
