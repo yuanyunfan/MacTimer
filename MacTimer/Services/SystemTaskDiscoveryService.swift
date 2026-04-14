@@ -205,14 +205,17 @@ final class SystemTaskDiscoveryService: ObservableObject {
 
         do {
             try process.run()
-            process.waitUntilExit()
         } catch {
             return []
         }
 
-        guard process.terminationStatus == 0 else { return [] }  // 无 crontab
-
+        // Read pipe data before waitUntilExit to avoid deadlock when output > 64KB.
+        // readDataToEndOfFile() blocks until the process closes stdout (i.e., exits),
+        // so it effectively drains the pipe concurrently with the child writing.
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+
+        guard process.terminationStatus == 0 else { return [] }  // 无 crontab
         guard let output = String(data: data, encoding: .utf8) else { return [] }
 
         let lines = output.components(separatedBy: .newlines)
