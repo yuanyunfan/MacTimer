@@ -116,7 +116,7 @@ final class SchedulerService: ObservableObject {
     // MARK: - Logging
 
     private func recordLog(task: TaskItem, outcome: ExecutionOutcome) {
-        // Trim logs if over 200
+        // Trim logs to keep at most 199 before inserting the new one (200 total after insert)
         let trimRequest = ExecutionLogItem.fetchRequest()
         trimRequest.predicate = NSPredicate(format: "taskID == %@", task.id as CVarArg)
         trimRequest.sortDescriptors = [NSSortDescriptor(key: "executedAt", ascending: true)]
@@ -124,6 +124,8 @@ final class SchedulerService: ObservableObject {
         if existing.count >= 200 {
             let toDelete = existing.prefix(existing.count - 199)
             toDelete.forEach { context.delete($0) }
+            // Save trim immediately so deletions are persisted even if a later save fails
+            saveContext()
         }
 
         let log = ExecutionLogItem(context: context)
@@ -133,6 +135,9 @@ final class SchedulerService: ObservableObject {
         log.result = outcome.result
         log.errorMessage = outcome.errorMessage
         log.duration = outcome.duration
+
+        // Save the new log entry immediately to prevent loss on later save failures
+        saveContext()
     }
 
     private func cancelTimer(for taskID: UUID) {
