@@ -36,8 +36,32 @@ struct ScheduleCalculator {
                 comps.hour = cfg.hour
                 comps.minute = cfg.minute
                 comps.second = 0
-                guard let fireDate = cal.date(from: comps) else { continue }
-                if fireDate > date {
+                // During DST spring-forward, the requested time may not exist.
+                // Use nextDate(after:matching:matchingPolicy:) to resolve to
+                // the next valid time on that day.
+                let fireDate: Date
+                if let exact = cal.date(from: comps) {
+                    fireDate = exact
+                } else {
+                    // Start of the candidate day, then find the next matching time
+                    let startOfDay = cal.startOfDay(for: candidate)
+                    var matchComps = DateComponents()
+                    matchComps.hour = cfg.hour
+                    matchComps.minute = cfg.minute
+                    matchComps.second = 0
+                    guard let resolved = cal.nextDate(
+                        after: startOfDay,
+                        matching: matchComps,
+                        matchingPolicy: .nextTimePreservingSmallerComponents
+                    ) else { continue }
+                    // Ensure the resolved date is still on the same day
+                    if cal.isDate(resolved, inSameDayAs: candidate) {
+                        fireDate = resolved
+                    } else {
+                        continue
+                    }
+                }
+                if fireDate >= date {
                     return fireDate
                 }
             }
