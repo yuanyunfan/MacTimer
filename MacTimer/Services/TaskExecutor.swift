@@ -1,5 +1,8 @@
 import Foundation
 import AppKit
+import os.log
+
+private let shellAuditLog = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.mactimer", category: "ShellExecution")
 
 struct ExecutionOutcome {
     let result: ExecutionResult
@@ -10,6 +13,81 @@ struct ExecutionOutcome {
 final class TaskExecutor {
     static let shared = TaskExecutor()
     private init() {}
+
+    // MARK: - Shell Command Security
+
+    /// Patterns considered dangerous and blocked from execution.
+    /// These catch common destructive or malicious shell idioms.
+    static let blockedPatterns: [String] = [
+        "rm -rf /",            // wipe root
+        "rm -rf ~",            // wipe home
+        "rm -rf ~/",           // wipe home (with slash)
+        "mkfs.",               // format filesystem
+        "dd if=",              // raw disk write
+        ":(){",                // fork bomb
+        "> /dev/sd",           // overwrite disk device
+        "chmod -R 777 /",      // open all permissions on root
+        "curl|sh", "curl |sh", "curl| sh", "curl | sh",  // pipe remote script
+        "wget|sh", "wget |sh", "wget| sh", "wget | sh",
+        "curl|bash", "curl |bash", "curl| bash", "curl | bash",
+        "wget|bash", "wget |bash", "wget| bash", "wget | bash",
+        "curl|zsh", "curl |zsh", "curl| zsh", "curl | zsh",
+        "wget|zsh", "wget |zsh", "wget| zsh", "wget | zsh",
+    ]
+
+    /// Returns a rejection reason if the command is blocked, or nil if allowed.
+    static func validateCommand(_ command: String) -> String? {
+        let trimmed = command.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Reject empty commands
+        if trimmed.isEmpty {
+            return "命令为空"
+        }
+
+        // Normalize for pattern matching: collapse whitespace, lowercase
+        let normalized = trimmed
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+            .lowercased()
+
+        for pattern in blockedPatterns {
+            if normalized.contains(pattern.lowercased()) {
+                return "命令被安全策略拒绝：包含危险操作 (\(pattern))"
+            }
+        }
+
+        return nil
+    }
+
+    /// Sandbox profile that restricts file-system writes and network access.
+    /// The command can read most paths and write only to /tmp and /var/tmp.
+    static let sandboxProfile = """
+    (version 1)
+    (deny default)
+    (allow process-exec)
+    (allow process-fork)
+    (allow signal)
+    (allow sysctl-read)
+    (allow mach-lookup)
+    (allow ipc-posix*)
+    (allow file-read*)
+    (allow file-write*
+        (subpath "/tmp")
+        (subpath "/var/tmp")
+        (subpath "/dev/null")
+        (subpath "/dev/zero")
+        (subpath "/dev/random")
+        (subpath "/dev/urandom")
+    )
+    (deny file-write*
+        (subpath "/System")
+        (subpath "/usr")
+        (subpath "/bin")
+        (subpath "/sbin")
+    )
+    (deny network*)
+    """
 
     func execute(task: TaskItem, taskName: String) async -> ExecutionOutcome {
         switch task.taskType {
@@ -24,14 +102,32 @@ final class TaskExecutor {
         }
     }
 
-    func executeShell(payload: TaskPayload, timeoutSeconds: Double = 30.0) async -> ExecutionOutcome {
+    func executeShell(payload: TaskPayload, timeoutSeconds: Double = 30.0, sandboxed: Bool = true) async -> ExecutionOutcome {
         guard let command = payload.command, !command.isEmpty else {
             return ExecutionOutcome(result: .failure, errorMessage: "命令为空", duration: 0)
         }
+
+        // Security: validate command against blocklist
+        if let rejection = Self.validateCommand(command) {
+            shellAuditLog.error("Shell command BLOCKED: \(command, privacy: .public) — \(rejection, privacy: .public)")
+            return ExecutionOutcome(result: .failure, errorMessage: rejection, duration: 0)
+        }
+
+        // Audit: log every command that will be executed
+        shellAuditLog.info("Shell command executing: \(command, privacy: .public)")
+
         let start = Date()
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-        process.arguments = ["-c", command]
+
+        if sandboxed {
+            // Run the command inside a sandbox using sandbox-exec
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/sandbox-exec")
+            process.arguments = ["-p", Self.sandboxProfile, "/bin/zsh", "-c", command]
+        } else {
+            process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+            process.arguments = ["-c", command]
+        }
+
         let pipe = Pipe()
         process.standardOutput = pipe
         process.standardError = pipe
@@ -119,6 +215,7 @@ final class TaskExecutor {
         // Read timedOut under outputLock to avoid data race with the timeout closure.
         outputLock.lock(); let didTimeout = timedOut; outputLock.unlock()
         if didTimeout {
+            shellAuditLog.warning("Shell command TIMEOUT after \(Int(timeoutSeconds))s: \(command, privacy: .public)")
             return ExecutionOutcome(result: .timeout,
                                    errorMessage: "执行超时（超过 \(Int(timeoutSeconds)) 秒）",
                                    duration: duration)
@@ -127,8 +224,10 @@ final class TaskExecutor {
             outputLock.lock()
             let output = String(data: outputData, encoding: .utf8) ?? "未知错误"
             outputLock.unlock()
+            shellAuditLog.warning("Shell command FAILED: \(command, privacy: .public)")
             return ExecutionOutcome(result: .failure, errorMessage: output, duration: duration)
         }
+        shellAuditLog.info("Shell command SUCCEEDED in \(String(format: "%.2f", duration))s: \(command, privacy: .public)")
         return ExecutionOutcome(result: .success, errorMessage: nil, duration: duration)
     }
 
