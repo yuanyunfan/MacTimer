@@ -102,7 +102,7 @@ final class TaskExecutor {
         }
     }
 
-    func executeShell(payload: TaskPayload, timeoutSeconds: Double = 30.0, sandboxed: Bool = true) async -> ExecutionOutcome {
+    func executeShell(payload: TaskPayload, timeoutSeconds: Double = 30.0) async -> ExecutionOutcome {
         guard let command = payload.command, !command.isEmpty else {
             return ExecutionOutcome(result: .failure, errorMessage: "命令为空", duration: 0)
         }
@@ -119,14 +119,9 @@ final class TaskExecutor {
         let start = Date()
         let process = Process()
 
-        if sandboxed {
-            // Run the command inside a sandbox using sandbox-exec
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/sandbox-exec")
-            process.arguments = ["-p", Self.sandboxProfile, "/bin/zsh", "-c", command]
-        } else {
-            process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-            process.arguments = ["-c", command]
-        }
+        // Always run the command inside a sandbox using sandbox-exec
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/sandbox-exec")
+        process.arguments = ["-p", Self.sandboxProfile, "/bin/zsh", "-c", command]
 
         let pipe = Pipe()
         process.standardOutput = pipe
