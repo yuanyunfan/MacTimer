@@ -155,6 +155,16 @@ final class TaskExecutor {
         let finished = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
             let lock = NSLock()
             var didResume = false
+            var didCloseHandle = false
+
+            func closeHandleOnce() {
+                lock.lock()
+                guard !didCloseHandle else { lock.unlock(); return }
+                didCloseHandle = true
+                lock.unlock()
+                pipe.fileHandleForReading.readabilityHandler = nil
+                try? pipe.fileHandleForReading.close()
+            }
 
             func resume(with value: Bool) {
                 lock.lock()
@@ -166,10 +176,6 @@ final class TaskExecutor {
 
             DispatchQueue.global().asyncAfter(deadline: .now() + timeoutSeconds) {
                 if process.isRunning {
-                    // Clear the readabilityHandler immediately so it stops firing
-                    // even if the process doesn't exit cleanly after SIGTERM.
-                    pipe.fileHandleForReading.readabilityHandler = nil
-
                     process.terminate() // SIGTERM
 
                     // Escalate: if process survives SIGTERM, send SIGKILL after a grace period.
@@ -180,8 +186,8 @@ final class TaskExecutor {
                         }
                     }
 
-                    // Close the pipe's read end to prevent FD leak in the timeout path.
-                    try? pipe.fileHandleForReading.close()
+                    // Close the pipe's read end exactly once to prevent FD leak.
+                    closeHandleOnce()
 
                     // Protect timedOut write under outputLock to avoid data race
                     // with the read that occurs after waitUntilExit() returns.
@@ -190,8 +196,7 @@ final class TaskExecutor {
                     // Process already exited before timeout fired (e.g. quick exit
                     // with no output). Ensure handler is cleared and FD is closed
                     // to prevent resource leaks if the EOF was missed.
-                    pipe.fileHandleForReading.readabilityHandler = nil
-                    try? pipe.fileHandleForReading.close()
+                    closeHandleOnce()
                 }
                 resume(with: false)
             }
@@ -200,8 +205,7 @@ final class TaskExecutor {
                 process.waitUntilExit()
                 // Ensure handler is cleared and FD is closed once the process exits,
                 // regardless of whether it was a normal exit or a timeout kill.
-                pipe.fileHandleForReading.readabilityHandler = nil
-                try? pipe.fileHandleForReading.close()
+                closeHandleOnce()
                 resume(with: process.terminationStatus == 0)
             }
         }
