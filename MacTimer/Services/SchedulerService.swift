@@ -121,6 +121,14 @@ final class SchedulerService: ObservableObject {
     private func scheduleNext(task: TaskItem, afterFireDate: Date) {
         let now = Date()
 
+        if task.schedule.type == .once {
+            // 一次性任务执行后自动禁用，不再调度
+            task.isEnabled = false
+            task.nextRunAt = nil
+            saveContext()
+            return
+        }
+
         if task.schedule.type == .interval, let cfg = task.schedule.interval {
             // 基于预定时间计算，避免漂移
             var nextFire = afterFireDate.addingTimeInterval(TimeInterval(cfg.seconds))

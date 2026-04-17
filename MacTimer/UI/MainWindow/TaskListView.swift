@@ -289,6 +289,11 @@ struct TaskListView: View {
             guard let cfg = schedule.fixedTime else { return "—" }
             let days = cfg.weekdays.map { weekdayName($0) }.joined(separator: "、")
             return "\(days) \(String(format: "%02d:%02d", cfg.hour, cfg.minute))"
+        case .once:
+            guard let cfg = schedule.once else { return "—" }
+            let fmt = DateFormatter()
+            fmt.dateFormat = "MM/dd HH:mm"
+            return "一次 \(fmt.string(from: cfg.date))"
         }
     }
 

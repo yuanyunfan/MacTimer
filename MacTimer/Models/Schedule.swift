@@ -2,11 +2,13 @@ import Foundation
 
 enum ScheduleType: String, Codable, CaseIterable {
     case fixedTime
+    case once
     case interval
 
     var displayName: String {
         switch self {
         case .fixedTime: return "固定时间"
+        case .once:      return "提醒一次"
         case .interval:  return "循环间隔"
         }
     }
@@ -34,6 +36,10 @@ struct FixedTimeConfig: Codable {
     }
 }
 
+struct OnceConfig: Codable {
+    var date: Date        // specific date & time to fire once
+}
+
 struct IntervalConfig: Codable {
     var seconds: Int      // minimum 60
     var startImmediately: Bool
@@ -54,5 +60,6 @@ struct IntervalConfig: Codable {
 struct ScheduleConfig: Codable {
     var type: ScheduleType
     var fixedTime: FixedTimeConfig?
+    var once: OnceConfig?
     var interval: IntervalConfig?
 }

@@ -26,6 +26,8 @@ struct ScheduleEditorSection: View {
 
             if schedule.type == .fixedTime {
                 fixedTimeFields
+            } else if schedule.type == .once {
+                onceFields
             } else {
                 intervalFields
             }
@@ -71,6 +73,15 @@ struct ScheduleEditorSection: View {
                     Text("分").font(.caption).foregroundStyle(.secondary)
                 }
             }
+        }
+    }
+
+    private var onceFields: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            DatePicker("提醒时间", selection: Binding(
+                get: { schedule.once?.date ?? Date().addingTimeInterval(3600) },
+                set: { schedule.once = OnceConfig(date: $0) }
+            ), in: Date()...)
         }
     }
 
