@@ -141,8 +141,11 @@ struct TaskEditorView: View {
             }
         }
         if schedule.type == .once {
-            guard schedule.once != nil else {
+            guard let onceDate = schedule.once else {
                 return "请选择提醒时间"
+            }
+            guard onceDate > Date() else {
+                return "提醒时间必须在当前时间之后"
             }
         }
         if schedule.type == .fixedTime {
