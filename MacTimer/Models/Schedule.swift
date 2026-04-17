@@ -21,14 +21,14 @@ struct FixedTimeConfig: Codable {
     var minute: Int       // 0–59
 
     init(weekdays: [Int], hour: Int, minute: Int) {
-        self.weekdays = weekdays
+        self.weekdays = weekdays.filter { (1...7).contains($0) }
         self.hour = max(0, min(23, hour))
         self.minute = max(0, min(59, minute))
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.weekdays = try container.decode([Int].self, forKey: .weekdays)
+        self.weekdays = try container.decode([Int].self, forKey: .weekdays).filter { (1...7).contains($0) }
         let rawHour = try container.decode(Int.self, forKey: .hour)
         let rawMinute = try container.decode(Int.self, forKey: .minute)
         self.hour = max(0, min(23, rawHour))
