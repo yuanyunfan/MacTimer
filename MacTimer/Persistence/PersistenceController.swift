@@ -38,6 +38,7 @@ struct PersistenceController {
                 NSLog("CoreData: failed to load persistent store: \(error)")
                 // Attempt recovery by removing the corrupted store and reloading
                 if let storeURL = storeURL {
+                    PersistenceController.backupStoreFiles(at: storeURL)
                     PersistenceController.removeStoreFiles(at: storeURL)
                 }
                 theContainer.loadPersistentStores { _, retryError in
@@ -52,6 +53,27 @@ struct PersistenceController {
             }
         }
         container.viewContext.automaticallyMergesChangesFromParent = true
+    }
+
+    /// Back up the SQLite store file and its companion files before deletion.
+    private static func backupStoreFiles(at url: URL) {
+        let fileManager = FileManager.default
+        let suffixes = ["", "-shm", "-wal"]
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMdd-HHmmss"
+        let timestamp = formatter.string(from: Date())
+        for suffix in suffixes {
+            let sourceURL = URL(fileURLWithPath: url.path + suffix)
+            let backupURL = URL(fileURLWithPath: url.path + suffix + ".backup-\(timestamp)")
+            if fileManager.fileExists(atPath: sourceURL.path) {
+                do {
+                    try fileManager.copyItem(at: sourceURL, to: backupURL)
+                    NSLog("CoreData: backed up \(sourceURL.lastPathComponent) to \(backupURL.lastPathComponent)")
+                } catch {
+                    NSLog("CoreData: failed to back up \(sourceURL.lastPathComponent): \(error)")
+                }
+            }
+        }
     }
 
     /// Remove the SQLite store file and its companion files (-shm, -wal).
@@ -70,7 +92,7 @@ struct PersistenceController {
             let alert = NSAlert()
             alert.alertStyle = .warning
             alert.messageText = "数据已重置"
-            alert.informativeText = "MacTimer 检测到数据文件损坏，已自动重置数据。之前的任务配置已丢失，请重新配置。"
+            alert.informativeText = "MacTimer 检测到数据文件损坏，已自动重置数据。损坏的数据文件已备份至应用数据目录（文件名含 .backup-）。之前的任务配置需要重新配置。"
             alert.addButton(withTitle: "好")
             alert.runModal()
         }
