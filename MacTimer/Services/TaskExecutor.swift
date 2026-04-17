@@ -14,32 +14,46 @@ final class TaskExecutor {
     static let shared = TaskExecutor()
     private init() {}
 
-    // MARK: - Shell Command Security
+    // MARK: - Shell Command Security (Defense-in-Depth)
+    //
+    // NOTE: This blocklist is **defense-in-depth only**. The primary security
+    // boundary is the mandatory sandbox-exec profile applied to every shell
+    // command (see `sandboxProfile`). A denylist can never be exhaustive
+    // against a Turing-complete shell; these checks exist to catch obvious
+    // mistakes and provide user-friendly early rejection messages.
 
-    /// Substring patterns considered dangerous and blocked from execution.
-    static let blockedPatterns: [String] = [
-        "rm -rf /",            // wipe root
-        "rm -rf ~",            // wipe home
-        "rm -rf ~/",           // wipe home (with slash)
-        "mkfs.",               // format filesystem
-        "dd if=",              // raw disk write
-        ":(){",                // fork bomb
-        "> /dev/sd",           // overwrite disk device
-        "chmod -r 777 /",      // open all permissions on root
-        "> /dev/disk",         // overwrite macOS disk device
-    ]
-
-    /// Regex patterns that catch dangerous idioms like piping remote content to a shell.
-    static let blockedRegexPatterns: [(pattern: String, description: String)] = [
-        // curl/wget piped to any shell (sh, bash, zsh) with anything in between
-        (#"(curl|wget)\s+.*\|\s*(sh|bash|zsh)"#, "通过管道将远程内容传递给 shell"),
-        // Reverse shell patterns
-        (#"/dev/tcp/"#, "可能的反向 shell"),
-        (#"bash\s+-i\s+>&"#, "可能的反向 shell"),
-        // Base64 decode piped to shell (obfuscation attempt)
-        (#"base64\s+(-d|--decode).*\|\s*(sh|bash|zsh)"#, "通过 base64 解码执行命令"),
-        // eval with command substitution
-        (#"eval\s+.*\$\("#, "eval 执行动态命令"),
+    /// Allowlist of permitted command base names.
+    /// Only commands whose first token (after resolving paths) appears in this
+    /// list are allowed to execute. Everything else is rejected.
+    static let allowedCommands: Set<String> = [
+        // Standard POSIX / macOS utilities considered safe within the sandbox
+        "echo", "printf", "cat", "head", "tail", "wc", "sort", "uniq",
+        "grep", "egrep", "fgrep", "awk", "sed", "cut", "tr", "tee",
+        "ls", "find", "stat", "file", "which", "whereis", "type",
+        "date", "cal", "uptime", "uname", "hostname", "whoami", "id",
+        "env", "printenv", "export", "set",
+        "pwd", "dirname", "basename", "realpath", "readlink",
+        "test", "[", "true", "false",
+        "sleep", "wait",
+        "diff", "comm", "cmp", "md5", "shasum", "sha256sum",
+        "bc", "expr", "seq", "jot",
+        "touch", "mkdir", "cp", "mv", "ln",
+        "tar", "gzip", "gunzip", "bzip2", "xz", "zip", "unzip",
+        "open",          // macOS open (sandboxed)
+        "say",           // macOS text-to-speech
+        "pbcopy", "pbpaste",
+        "defaults", "sw_vers", "system_profiler", "sysctl",
+        "osascript",     // limited by sandbox
+        "python3", "python", "ruby", "perl", "node", "swift",
+        "git", "svn",
+        "make", "xcodebuild", "xcrun",
+        "brew",
+        "man", "apropos", "info",
+        "less", "more",
+        "df", "du",
+        "top", "ps", "kill", "killall",  // observe-only within sandbox
+        "ping", "traceroute", "dig", "nslookup", "host",  // blocked by sandbox network deny
+        "ssh", "scp", "sftp",  // blocked by sandbox network deny
     ]
 
     /// Returns a rejection reason if the command is blocked, or nil if allowed.
@@ -58,14 +72,45 @@ final class TaskExecutor {
             .joined(separator: " ")
             .lowercased()
 
-        // Check substring-based blocked patterns
-        for pattern in blockedPatterns {
-            if normalized.contains(pattern.lowercased()) {
-                return "命令被安全策略拒绝：包含危险操作 (\(pattern))"
-            }
+        // --- Allowlist check ---
+        // Extract the base command name (first token, stripped of any path prefix).
+        let firstToken = normalized.components(separatedBy: " ").first ?? ""
+        let baseName = (firstToken as NSString).lastPathComponent
+
+        if !allowedCommands.contains(baseName) {
+            return "命令被安全策略拒绝：不允许执行 \(baseName)（仅允许白名单中的命令）"
         }
 
-        // Check regex-based blocked patterns
+        // --- Additional regex-based checks (defense-in-depth) ---
+        // Even for allowed commands, block obviously dangerous argument patterns.
+        let blockedRegexPatterns: [(pattern: String, description: String)] = [
+            // rm with recursive + force targeting root or home
+            (#"rm\s+.*-\w*r\w*f\w*.*(/\s|/\"|/$|~)"#, "递归删除根目录或主目录"),
+            (#"rm\s+.*-\w*f\w*r\w*.*(/\s|/\"|/$|~)"#, "递归删除根目录或主目录"),
+            // Piping anything to a shell interpreter (full or short path)
+            (#"\|[^|]*\b(sh|bash|zsh|fish|csh|tcsh|dash|ksh)\b"#, "通过管道将内容传递给 shell"),
+            (#"\|\s*(/\w+)*/?(sh|bash|zsh)\b"#, "通过管道将内容传递给 shell"),
+            // Reverse shell patterns
+            (#"/dev/tcp/"#, "可能的反向 shell"),
+            (#"bash\s+-i\s+>&"#, "可能的反向 shell"),
+            // Base64 decode piped to shell (obfuscation attempt)
+            (#"base64\s+(-d|--decode).*\|\s*\S*(sh|bash|zsh)"#, "通过 base64 解码执行命令"),
+            // eval with command substitution or backticks
+            (#"eval\s+.*(\$\(|`)"#, "eval 执行动态命令"),
+            // source from process substitution or /dev/stdin
+            (#"source\s+(/dev/stdin|<\()"#, "从标准输入 source 脚本"),
+            // mkfs (format filesystem)
+            (#"\bmkfs\b"#, "格式化文件系统"),
+            // dd with if= (raw disk write)
+            (#"\bdd\b.*\bif="#, "原始磁盘写入"),
+            // fork bomb
+            (#":\(\)\s*\{"#, "fork bomb"),
+            // overwrite disk devices
+            (#">\s*/dev/(sd|disk|nvme)"#, "覆盖磁盘设备"),
+            // chmod 777 on root
+            (#"chmod\s+.*777\s+/"#, "开放根目录权限"),
+        ]
+
         for (pattern, description) in blockedRegexPatterns {
             if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
                regex.firstMatch(in: normalized, range: NSRange(normalized.startIndex..., in: normalized)) != nil {
