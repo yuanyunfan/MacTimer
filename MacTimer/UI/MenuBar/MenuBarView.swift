@@ -120,7 +120,8 @@ struct MenuBarView: View {
         }
         return enabledTasks.filter { task in
             guard let next = task.nextRunAt else { return false }
-            return next <= endOfDay
+            let now = Date()
+            return next >= now && next <= endOfDay
         }.count
     }
 
