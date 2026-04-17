@@ -15,6 +15,7 @@ final class SchedulerService: ObservableObject {
 
     /// Tracks whether sleep/wake observers have been registered
     private var observingSleepWake = false
+    private var sleepWakeObserver: NSObjectProtocol?
 
     /// Tracks task IDs currently being executed to prevent duplicate execution
     /// (e.g. race between RunLoop-fired timer and wake handler)
@@ -39,6 +40,12 @@ final class SchedulerService: ObservableObject {
             }
         }
         registerSleepWakeObservers()
+    }
+
+    deinit {
+        if let observer = sleepWakeObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+        }
     }
 
     func stop() {
@@ -203,7 +210,7 @@ final class SchedulerService: ObservableObject {
         observingSleepWake = true
 
         let wsc = NSWorkspace.shared.notificationCenter
-        wsc.addObserver(
+        sleepWakeObserver = wsc.addObserver(
             forName: NSWorkspace.didWakeNotification,
             object: nil,
             queue: .main
