@@ -155,8 +155,37 @@ final class SchedulerService: ObservableObject {
             RunLoop.main.add(timer, forMode: .common)
             activeTimers[task.id] = timer
         } else {
-            // 固定时间任务：直接复用原有逻辑
-            schedule(task: task, isFirstRun: false)
+            // 固定时间任务：基于预定触发时间计算下次执行，避免漂移
+            guard let fireDate = ScheduleCalculator.nextRunAt(
+                schedule: task.schedule,
+                after: afterFireDate,
+                isFirstRun: false
+            ) else { return }
+
+            // 如果计算出的时间已经过了，用当前时间重新计算
+            let nextFire: Date
+            if fireDate <= now {
+                guard let fallback = ScheduleCalculator.nextRunAt(
+                    schedule: task.schedule,
+                    after: now,
+                    isFirstRun: false
+                ) else { return }
+                nextFire = fallback
+            } else {
+                nextFire = fireDate
+            }
+
+            task.nextRunAt = nextFire
+            saveContext()
+
+            let taskID = task.id
+            let timer = Timer(fire: nextFire, interval: 0, repeats: false) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.handleTimerFired(taskID: taskID)
+                }
+            }
+            RunLoop.main.add(timer, forMode: .common)
+            activeTimers[task.id] = timer
         }
     }
 
