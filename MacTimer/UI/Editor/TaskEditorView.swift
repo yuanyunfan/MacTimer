@@ -140,6 +140,11 @@ struct TaskEditorView: View {
                 return "间隔时间最小为 60 秒"
             }
         }
+        if schedule.type == .once {
+            guard schedule.once != nil else {
+                return "请选择提醒时间"
+            }
+        }
         if schedule.type == .fixedTime {
             guard let cfg = schedule.fixedTime, !cfg.weekdays.isEmpty else {
                 return "请至少选择一个重复日"
