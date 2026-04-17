@@ -16,8 +16,7 @@ final class TaskExecutor {
 
     // MARK: - Shell Command Security
 
-    /// Patterns considered dangerous and blocked from execution.
-    /// These catch common destructive or malicious shell idioms.
+    /// Substring patterns considered dangerous and blocked from execution.
     static let blockedPatterns: [String] = [
         "rm -rf /",            // wipe root
         "rm -rf ~",            // wipe home
@@ -26,13 +25,21 @@ final class TaskExecutor {
         "dd if=",              // raw disk write
         ":(){",                // fork bomb
         "> /dev/sd",           // overwrite disk device
-        "chmod -R 777 /",      // open all permissions on root
-        "curl|sh", "curl |sh", "curl| sh", "curl | sh",  // pipe remote script
-        "wget|sh", "wget |sh", "wget| sh", "wget | sh",
-        "curl|bash", "curl |bash", "curl| bash", "curl | bash",
-        "wget|bash", "wget |bash", "wget| bash", "wget | bash",
-        "curl|zsh", "curl |zsh", "curl| zsh", "curl | zsh",
-        "wget|zsh", "wget |zsh", "wget| zsh", "wget | zsh",
+        "chmod -r 777 /",      // open all permissions on root
+        "> /dev/disk",         // overwrite macOS disk device
+    ]
+
+    /// Regex patterns that catch dangerous idioms like piping remote content to a shell.
+    static let blockedRegexPatterns: [(pattern: String, description: String)] = [
+        // curl/wget piped to any shell (sh, bash, zsh) with anything in between
+        (#"(curl|wget)\s+.*\|\s*(sh|bash|zsh)"#, "通过管道将远程内容传递给 shell"),
+        // Reverse shell patterns
+        (#"/dev/tcp/"#, "可能的反向 shell"),
+        (#"bash\s+-i\s+>&"#, "可能的反向 shell"),
+        // Base64 decode piped to shell (obfuscation attempt)
+        (#"base64\s+(-d|--decode).*\|\s*(sh|bash|zsh)"#, "通过 base64 解码执行命令"),
+        // eval with command substitution
+        (#"eval\s+.*\$\("#, "eval 执行动态命令"),
     ]
 
     /// Returns a rejection reason if the command is blocked, or nil if allowed.
@@ -51,9 +58,18 @@ final class TaskExecutor {
             .joined(separator: " ")
             .lowercased()
 
+        // Check substring-based blocked patterns
         for pattern in blockedPatterns {
             if normalized.contains(pattern.lowercased()) {
                 return "命令被安全策略拒绝：包含危险操作 (\(pattern))"
+            }
+        }
+
+        // Check regex-based blocked patterns
+        for (pattern, description) in blockedRegexPatterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+               regex.firstMatch(in: normalized, range: NSRange(normalized.startIndex..., in: normalized)) != nil {
+                return "命令被安全策略拒绝：\(description)"
             }
         }
 
