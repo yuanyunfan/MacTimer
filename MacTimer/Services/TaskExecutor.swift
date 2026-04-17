@@ -223,13 +223,18 @@ final class TaskExecutor {
                     // Protect timedOut write under outputLock to avoid data race
                     // with the read that occurs after waitUntilExit() returns.
                     outputLock.lock(); timedOut = true; outputLock.unlock()
+
+                    // Only resume from the timeout path when we actually killed
+                    // the process. For natural exits, let waitUntilExit handle it.
+                    resume(with: false)
                 } else {
                     // Process already exited before timeout fired (e.g. quick exit
                     // with no output). Ensure handler is cleared and FD is closed
                     // to prevent resource leaks if the EOF was missed.
                     closeHandleOnce()
+                    // Do NOT resume here — let the waitUntilExit path provide the
+                    // correct exit status so error info is not lost.
                 }
-                resume(with: false)
             }
 
             DispatchQueue.global().async {
