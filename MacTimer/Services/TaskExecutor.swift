@@ -65,11 +65,17 @@ final class TaskExecutor {
     static let sandboxProfile = """
     (version 1)
     (deny default)
-    (allow process-exec)
+    (allow process-exec (literal "/bin/zsh") (literal "/bin/bash") (literal "/usr/bin/env"))
     (allow process-fork)
-    (allow signal)
+    (allow signal (target self))
     (allow sysctl-read)
-    (allow mach-lookup)
+    (allow mach-lookup
+        (global-name "com.apple.bsd.dirhelper")
+        (global-name "com.apple.system.logger")
+        (global-name "com.apple.system.opendirectoryd.libinfo")
+        (global-name "com.apple.CoreServices.coreservicesd")
+        (global-name "com.apple.SecurityServer")
+    )
     (allow ipc-posix*)
     (allow file-read*)
     (allow file-write*
