@@ -68,7 +68,12 @@ final class SchedulerService: ObservableObject {
             schedule: task.schedule,
             after: Date(),
             isFirstRun: isFirstRun
-        ) else { return }
+        ) else {
+            if let error = task.schedule.validationError() {
+                NSLog("SchedulerService: task '\(task.name)' has invalid schedule config – \(error)")
+            }
+            return
+        }
 
         task.nextRunAt = fireDate
         saveContext()

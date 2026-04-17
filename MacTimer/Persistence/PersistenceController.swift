@@ -17,6 +17,7 @@ struct PersistenceController {
         task.schedule = ScheduleConfig(
             type: .fixedTime,
             fixedTime: FixedTimeConfig(weekdays: [1, 2, 3, 4, 5], hour: 9, minute: 0),
+            once: nil,
             interval: nil
         )
         task.createdAt = Date()

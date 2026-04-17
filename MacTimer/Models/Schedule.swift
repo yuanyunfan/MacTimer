@@ -62,4 +62,22 @@ struct ScheduleConfig: Codable {
     var fixedTime: FixedTimeConfig?
     var once: OnceConfig?
     var interval: IntervalConfig?
+
+    /// Returns a validation error message if the type doesn't match the populated config, nil if valid.
+    func validationError() -> String? {
+        switch type {
+        case .once:
+            if once == nil { return "Schedule type is .once but once config is nil" }
+        case .fixedTime:
+            if fixedTime == nil { return "Schedule type is .fixedTime but fixedTime config is nil" }
+            if let cfg = fixedTime, cfg.weekdays.isEmpty { return "fixedTime config has no weekdays" }
+        case .interval:
+            if interval == nil { return "Schedule type is .interval but interval config is nil" }
+            if let cfg = interval, cfg.seconds < 60 { return "interval config seconds must be >= 60" }
+        }
+        return nil
+    }
+
+    /// Whether this config is internally consistent.
+    var isValid: Bool { validationError() == nil }
 }
