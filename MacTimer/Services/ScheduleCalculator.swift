@@ -11,6 +11,10 @@ struct ScheduleCalculator {
         after date: Date = Date(),
         isFirstRun: Bool = false
     ) -> Date? {
+        if let error = schedule.validationError() {
+            NSLog("ScheduleCalculator: invalid config – \(error)")
+            return nil
+        }
         switch schedule.type {
         case .once:
             guard let cfg = schedule.once else { return nil }
