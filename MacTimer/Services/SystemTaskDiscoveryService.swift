@@ -16,10 +16,12 @@ final class SystemTaskDiscoveryService: ObservableObject {
     /// 执行一次完整扫描
     func discover() {
         Task {
+            let discoverLaunchAgents = self.discoverLaunchAgents
+            let discoverCrontab = self.discoverCrontab
             let discovered = await Task.detached {
                 var result: [SystemTask] = []
-                result.append(contentsOf: self.discoverLaunchAgents())
-                result.append(contentsOf: self.discoverCrontab())
+                result.append(contentsOf: discoverLaunchAgents())
+                result.append(contentsOf: discoverCrontab())
                 return result
             }.value
             self.tasks = discovered
