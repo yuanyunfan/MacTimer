@@ -102,17 +102,21 @@ final class SchedulerService: ObservableObject {
 
         executingTaskIDs.insert(taskID)
 
+        // Capture task properties before async suspension to avoid accessing
+        // potentially faulted/invalidated managed objects after await (#63)
+        let taskName = task.name
+
         Task { @MainActor [weak self] in
             guard let self else { return }
             defer { self.executingTaskIDs.remove(taskID) }
-            let outcome = await TaskExecutor.shared.execute(task: task, taskName: task.name)
+            let outcome = await TaskExecutor.shared.execute(task: task, taskName: taskName)
             guard !task.isDeleted, !task.isFault else { return }
             self.recordLog(task: task, outcome: outcome)
             task.lastRunAt = Date()
             if outcome.result != .success {
-                self.lastFailedTaskName = task.name
+                self.lastFailedTaskName = taskName
                 await NotificationService.shared.sendError(
-                    taskName: task.name,
+                    taskName: taskName,
                     message: outcome.errorMessage ?? "未知错误"
                 )
             }
@@ -205,6 +209,7 @@ final class SchedulerService: ObservableObject {
         print("[SchedulerService] Missed execution for '\(task.name)' (was due at \(missedDate)), executing now")
 
         let taskID = task.id
+        let taskName = task.name
         executingTaskIDs.insert(taskID)
 
         Task { @MainActor [weak self] in
@@ -212,16 +217,16 @@ final class SchedulerService: ObservableObject {
             defer { self.executingTaskIDs.remove(taskID) }
             guard !task.isDeleted, !task.isFault, task.isEnabled else { return }
 
-            let outcome = await TaskExecutor.shared.execute(task: task, taskName: task.name)
+            let outcome = await TaskExecutor.shared.execute(task: task, taskName: taskName)
             guard !task.isDeleted, !task.isFault else { return }
 
             self.recordLog(task: task, outcome: outcome)
             task.lastRunAt = Date()
 
             if outcome.result != .success {
-                self.lastFailedTaskName = task.name
+                self.lastFailedTaskName = taskName
                 await NotificationService.shared.sendError(
-                    taskName: task.name,
+                    taskName: taskName,
                     message: outcome.errorMessage ?? "未知错误"
                 )
             }
