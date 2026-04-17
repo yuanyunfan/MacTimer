@@ -16,12 +16,10 @@ final class SystemTaskDiscoveryService: ObservableObject {
     /// 执行一次完整扫描
     func discover() {
         Task {
-            let discoverLaunchAgents = self.discoverLaunchAgents
-            let discoverCrontab = self.discoverCrontab
             let discovered = await Task.detached {
                 var result: [SystemTask] = []
-                result.append(contentsOf: discoverLaunchAgents())
-                result.append(contentsOf: discoverCrontab())
+                result.append(contentsOf: SystemTaskDiscoveryService.discoverLaunchAgents())
+                result.append(contentsOf: SystemTaskDiscoveryService.discoverCrontab())
                 return result
             }.value
             self.tasks = discovered
@@ -31,7 +29,7 @@ final class SystemTaskDiscoveryService: ObservableObject {
 
     // MARK: - LaunchAgents Discovery
 
-    nonisolated private func discoverLaunchAgents() -> [SystemTask] {
+    nonisolated private static func discoverLaunchAgents() -> [SystemTask] {
         let agentsDir = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/LaunchAgents")
 
@@ -47,7 +45,7 @@ final class SystemTaskDiscoveryService: ObservableObject {
         return plists.compactMap { parseLaunchdPlist(at: $0) }
     }
 
-    nonisolated private func parseLaunchdPlist(at url: URL) -> SystemTask? {
+    nonisolated private static func parseLaunchdPlist(at url: URL) -> SystemTask? {
         guard let data = try? Data(contentsOf: url),
               let plist = try? PropertyListSerialization.propertyList(
                   from: data, options: [], format: nil
@@ -105,7 +103,7 @@ final class SystemTaskDiscoveryService: ObservableObject {
     }
 
     /// 解析 launchd 的 StartInterval / StartCalendarInterval
-    nonisolated private func parseLaunchdSchedule(_ plist: [String: Any]) -> (ScheduleConfig?, String?) {
+    nonisolated private static func parseLaunchdSchedule(_ plist: [String: Any]) -> (ScheduleConfig?, String?) {
         // StartInterval → 间隔模式
         if let interval = plist["StartInterval"] as? Int, interval > 0 {
             let config = ScheduleConfig(
@@ -132,7 +130,7 @@ final class SystemTaskDiscoveryService: ObservableObject {
         return (nil, nil)
     }
 
-    nonisolated private func parseCalendarInterval(_ dict: [String: Any]) -> (ScheduleConfig?, String?) {
+    nonisolated private static func parseCalendarInterval(_ dict: [String: Any]) -> (ScheduleConfig?, String?) {
         let hour   = dict["Hour"]    as? Int
         let minute = dict["Minute"]  as? Int
         let weekday = dict["Weekday"] as? Int   // 0=Sunday, 1=Monday...6=Saturday
@@ -164,7 +162,7 @@ final class SystemTaskDiscoveryService: ObservableObject {
         return (config, describeLaunchdCalendarDict(dict))
     }
 
-    nonisolated private func describeLaunchdCalendarDict(_ dict: [String: Any]) -> String {
+    nonisolated private static func describeLaunchdCalendarDict(_ dict: [String: Any]) -> String {
         var parts: [String] = []
         if let month = dict["Month"] as? Int { parts.append("\(month) 月") }
         if let day   = dict["Day"]   as? Int { parts.append("\(day) 日") }
@@ -179,7 +177,7 @@ final class SystemTaskDiscoveryService: ObservableObject {
     }
 
     /// 检查 launchd job 是否已加载
-    nonisolated private func checkLaunchdLoaded(label: String) -> Bool {
+    nonisolated private static func checkLaunchdLoaded(label: String) -> Bool {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/launchctl")
         process.arguments = ["list", label]
@@ -196,7 +194,7 @@ final class SystemTaskDiscoveryService: ObservableObject {
 
     // MARK: - Crontab Discovery
 
-    nonisolated private func discoverCrontab() -> [SystemTask] {
+    nonisolated private static func discoverCrontab() -> [SystemTask] {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/crontab")
         process.arguments = ["-l"]
@@ -226,7 +224,7 @@ final class SystemTaskDiscoveryService: ObservableObject {
         }
     }
 
-    nonisolated private func parseCrontabLine(_ line: String, lineNumber: Int) -> SystemTask? {
+    nonisolated private static func parseCrontabLine(_ line: String, lineNumber: Int) -> SystemTask? {
         let trimmed = line.trimmingCharacters(in: .whitespaces)
 
         // 跳过空行和注释
@@ -277,7 +275,7 @@ final class SystemTaskDiscoveryService: ObservableObject {
     }
 
     /// 解析 cron 5 字段表达式
-    nonisolated private func parseCronSchedule(
+    nonisolated private static func parseCronSchedule(
         minute: String, hour: String,
         day: String, month: String, weekday: String
     ) -> (ScheduleConfig?, String) {
@@ -301,7 +299,7 @@ final class SystemTaskDiscoveryService: ObservableObject {
     }
 
     /// 尝试将 */N 格式解析为间隔
-    nonisolated private func tryParseAsInterval(minute: String, hour: String) -> IntervalConfig? {
+    nonisolated private static func tryParseAsInterval(minute: String, hour: String) -> IntervalConfig? {
         // */N * * * * → 每 N 分钟
         if minute.hasPrefix("*/"), let n = Int(minute.dropFirst(2)),
            hour == "*" {
@@ -315,7 +313,7 @@ final class SystemTaskDiscoveryService: ObservableObject {
     }
 
     /// 尝试解析为固定时间配置
-    nonisolated private func tryParseAsFixedTime(
+    nonisolated private static func tryParseAsFixedTime(
         minute: String, hour: String, weekday: String,
         day: String, month: String
     ) -> FixedTimeConfig? {
@@ -336,7 +334,7 @@ final class SystemTaskDiscoveryService: ObservableObject {
     /// 解析 cron weekday 字段，返回 ISO weekday 数组
     /// cron: 0/7=Sunday, 1=Monday...6=Saturday
     /// ISO:  1=Monday...7=Sunday
-    nonisolated private func parseCronWeekdays(_ field: String) -> [Int] {
+    nonisolated private static func parseCronWeekdays(_ field: String) -> [Int] {
         if field == "*" {
             return [1, 2, 3, 4, 5, 6, 7]
         }
@@ -365,7 +363,7 @@ final class SystemTaskDiscoveryService: ObservableObject {
     }
 
     /// cron weekday → ISO weekday
-    nonisolated private func cronWeekdayToISO(_ cron: Int) -> Int? {
+    nonisolated private static func cronWeekdayToISO(_ cron: Int) -> Int? {
         // cron: 0,7=Sun  1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat
         // ISO:  7=Sun    1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat
         switch cron {
@@ -377,7 +375,7 @@ final class SystemTaskDiscoveryService: ObservableObject {
 
     // MARK: - Formatting Helpers
 
-    nonisolated private func formatInterval(_ seconds: Int) -> String {
+    nonisolated private static func formatInterval(_ seconds: Int) -> String {
         let hours = seconds / 3600
         let minutes = (seconds % 3600) / 60
         if hours > 0 && minutes > 0 { return "每 \(hours) 小时 \(minutes) 分" }
@@ -386,7 +384,7 @@ final class SystemTaskDiscoveryService: ObservableObject {
         return "每 \(seconds) 秒"
     }
 
-    nonisolated private func describeFixedTime(_ config: FixedTimeConfig) -> String {
+    nonisolated private static func describeFixedTime(_ config: FixedTimeConfig) -> String {
         let dayNames = ["一", "二", "三", "四", "五", "六", "日"]
         if config.weekdays.count == 7 {
             return String(format: "每天 %02d:%02d", config.hour, config.minute)
@@ -396,7 +394,7 @@ final class SystemTaskDiscoveryService: ObservableObject {
         return String(format: "%@ %02d:%02d", days, config.hour, config.minute)
     }
 
-    nonisolated private func extractCronTaskName(_ command: String) -> String {
+    nonisolated private static func extractCronTaskName(_ command: String) -> String {
         // 取命令中第一个可执行文件的名称
         let firstPart = command.split(separator: " ").first.map(String.init) ?? command
         let lastComponent = (firstPart as NSString).lastPathComponent
@@ -410,25 +408,25 @@ final class SystemTaskDiscoveryService: ObservableObject {
 
     #if DEBUG
     func testParseCronWeekdays(_ field: String) -> [Int] {
-        parseCronWeekdays(field)
+        Self.parseCronWeekdays(field)
     }
 
     func testParseCronSchedule(
         minute: String, hour: String, day: String, month: String, weekday: String
     ) -> (ScheduleConfig?, String) {
-        parseCronSchedule(minute: minute, hour: hour, day: day, month: month, weekday: weekday)
+        Self.parseCronSchedule(minute: minute, hour: hour, day: day, month: month, weekday: weekday)
     }
 
     func testParseLaunchdSchedule(_ plist: [String: Any]) -> (ScheduleConfig?, String?) {
-        parseLaunchdSchedule(plist)
+        Self.parseLaunchdSchedule(plist)
     }
 
     func testParseCrontabLine(_ line: String, lineNumber: Int) -> SystemTask? {
-        parseCrontabLine(line, lineNumber: lineNumber)
+        Self.parseCrontabLine(line, lineNumber: lineNumber)
     }
 
     func testFormatInterval(_ seconds: Int) -> String {
-        formatInterval(seconds)
+        Self.formatInterval(seconds)
     }
     #endif
 }
