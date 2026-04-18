@@ -63,8 +63,10 @@ final class TaskExecutor {
             return "命令为空"
         }
 
-        // Reject commands containing embedded newlines (can chain commands)
-        if trimmed.contains("\n") || trimmed.contains("\r") {
+        // Reject commands containing newlines (can chain commands in zsh -c).
+        // Check the ORIGINAL command, not trimmed, because trimming strips
+        // leading/trailing newlines that would still reach the shell.
+        if command.contains("\n") || command.contains("\r") {
             return "命令被安全策略拒绝：包含不允许的 shell 元字符 - 换行符（命令链接）"
         }
 
@@ -78,7 +80,6 @@ final class TaskExecutor {
         // --- Reject shell metacharacters that enable command chaining/substitution ---
         // Check these BEFORE the allowlist so chained commands cannot bypass validation.
         let shellMetacharacters: [(pattern: String, description: String)] = [
-            (#"\n"#, "换行符（命令链接）"),
             (#";"#, "分号（命令链接）"),
             (#"\|"#, "管道符"),
             (#"&&"#, "逻辑与（命令链接）"),
@@ -267,7 +268,8 @@ final class TaskExecutor {
         // Always run the command inside a sandbox using sandbox-exec
         let profile = Self.sandboxProfile(tmpDir: sandboxTmpDir)
         process.executableURL = URL(fileURLWithPath: "/usr/bin/sandbox-exec")
-        process.arguments = ["-p", profile, "/bin/zsh", "-c", command]
+        let sanitizedCommand = command.trimmingCharacters(in: .whitespacesAndNewlines)
+        process.arguments = ["-p", profile, "/bin/zsh", "-c", sanitizedCommand]
 
         // Provide the sandboxed tmp dir as TMPDIR so commands use it naturally
         var env = ProcessInfo.processInfo.environment
