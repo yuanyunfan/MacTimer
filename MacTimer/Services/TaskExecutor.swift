@@ -44,7 +44,12 @@ final class TaskExecutor {
         "pbcopy", "pbpaste",
         "defaults", "sw_vers", "system_profiler", "sysctl",
         "git", "svn",
-        "make", "xcodebuild", "xcrun",
+        "make", "xcodebuild",
+        // NOTE: xcrun is excluded because it can invoke arbitrary toolchain
+        // binaries (e.g. `xcrun swift`, `xcrun python3`), bypassing the allowlist.
+        // General-purpose scripting interpreters (python3, python, ruby, perl,
+        // node, swift) are intentionally excluded — they can execute arbitrary
+        // code that bypasses both the allowlist and metacharacter checks.
         "brew",
         "man", "apropos", "info",
         "less", "more",
