@@ -18,7 +18,7 @@ struct ScheduleCalculator {
         switch schedule.type {
         case .once:
             guard let cfg = schedule.once else { return nil }
-            return cfg.date > date ? cfg.date : nil
+            return cfg.date >= date ? cfg.date : nil
 
         case .interval:
             guard let cfg = schedule.interval, cfg.seconds >= 60 else { return nil }
