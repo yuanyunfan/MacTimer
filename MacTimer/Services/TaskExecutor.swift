@@ -43,15 +43,13 @@ final class TaskExecutor {
         "say",           // macOS text-to-speech
         "pbcopy", "pbpaste",
         "defaults", "sw_vers", "system_profiler", "sysctl",
-        "osascript",     // limited by sandbox
-        "python3", "python", "ruby", "perl", "node", "swift",
         "git", "svn",
         "make", "xcodebuild", "xcrun",
         "brew",
         "man", "apropos", "info",
         "less", "more",
         "df", "du",
-        "top", "ps", "kill", "killall",  // observe-only within sandbox
+        "top", "ps",  // observe-only within sandbox
         "ping", "traceroute", "dig", "nslookup", "host",  // blocked by sandbox network deny
         "ssh", "scp", "sftp",  // blocked by sandbox network deny
     ]
