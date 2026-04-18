@@ -81,6 +81,26 @@ final class TaskExecutor {
             return "命令被安全策略拒绝：不允许执行 \(baseName)（仅允许白名单中的命令）"
         }
 
+        // --- Reject shell metacharacters that enable command chaining/substitution ---
+        let shellMetacharacters: [(pattern: String, description: String)] = [
+            (#";"#, "分号（命令链接）"),
+            (#"\|"#, "管道符"),
+            (#"&&"#, "逻辑与（命令链接）"),
+            (#"\|\|"#, "逻辑或（命令链接）"),
+            (#"\$\("#, "命令替换 $()"),
+            (#"`"#, "反引号命令替换"),
+            (#"\$\{"#, "变量展开 ${}"),
+            (#">\("#, "进程替换 >()"),
+            (#"<\("#, "进程替换 <()"),
+        ]
+
+        for (pattern, description) in shellMetacharacters {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: []),
+               regex.firstMatch(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed)) != nil {
+                return "命令被安全策略拒绝：包含不允许的 shell 元字符 - \(description)"
+            }
+        }
+
         // --- Additional regex-based checks (defense-in-depth) ---
         // Even for allowed commands, block obviously dangerous argument patterns.
         let blockedRegexPatterns: [(pattern: String, description: String)] = [
