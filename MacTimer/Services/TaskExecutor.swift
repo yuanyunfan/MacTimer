@@ -142,64 +142,82 @@ final class TaskExecutor {
     }
 
     /// Sandbox profile that restricts file-system writes and network access.
-    /// The command can read most paths and write only to /tmp and /var/tmp.
-    static let sandboxProfile = """
-    (version 1)
-    (deny default)
-    (allow process-exec (literal "/bin/zsh") (literal "/bin/bash") (literal "/usr/bin/env"))
-    (allow process-fork)
-    (allow signal (target self))
-    (allow sysctl-read)
-    (allow mach-lookup
-        (global-name "com.apple.bsd.dirhelper")
-        (global-name "com.apple.system.logger")
-        (global-name "com.apple.system.opendirectoryd.libinfo")
-        (global-name "com.apple.CoreServices.coreservicesd")
-        (global-name "com.apple.SecurityServer")
-    )
-    (allow ipc-posix*)
-    (allow file-read*
-        (subpath "/usr/lib")
-        (subpath "/usr/share")
-        (subpath "/usr/bin")
-        (subpath "/bin")
-        (subpath "/sbin")
-        (subpath "/usr/sbin")
-        (subpath "/System")
-        (subpath "/Library/Preferences")
-        (subpath "/tmp")
-        (subpath "/var/tmp")
-        (subpath "/dev")
-        (subpath "/private/tmp")
-        (subpath "/private/var/tmp")
-        (subpath "/Applications")
-    )
-    (deny file-read*
-        (subpath "/Users")
-        (regex #"/.ssh"#)
-        (regex #"/\.gnupg"#)
-        (regex #"/Keychains"#)
-        (regex #"/credentials"#)
-        (regex #"/\.aws"#)
-        (regex #"/\.docker"#)
-        (regex #"/\.kube"#)
-    )
-    (allow file-write*
-        (subpath "/tmp")
-        (subpath "/var/tmp")
-        (subpath "/dev/null")
-        (subpath "/dev/zero")
-        (subpath "/dev/random")
-        (subpath "/dev/urandom")
-    )
-    (deny file-write*
-        (subpath "/System")
-        (subpath "/usr")
-        (subpath "/bin")
-        (subpath "/sbin")
-    )
-    (deny network*)
-    """
+    /// The command can read most paths and write only to a per-execution
+    /// unique subdirectory under /tmp to prevent privilege escalation via /tmp.
+    static func sandboxProfile(tmpDir: String) -> String {
+        """
+        (version 1)
+        (deny default)
+        (allow process-exec (literal "/bin/zsh") (literal "/bin/bash") (literal "/usr/bin/env"))
+        (allow process-fork)
+        (allow signal (target self))
+        (allow sysctl-read)
+        (allow mach-lookup
+            (global-name "com.apple.bsd.dirhelper")
+            (global-name "com.apple.system.logger")
+            (global-name "com.apple.system.opendirectoryd.libinfo")
+            (global-name "com.apple.CoreServices.coreservicesd")
+            (global-name "com.apple.SecurityServer")
+        )
+        (allow ipc-posix*)
+        (allow file-read*
+            (subpath "/usr/lib")
+            (subpath "/usr/share")
+            (subpath "/usr/bin")
+            (subpath "/bin")
+            (subpath "/sbin")
+            (subpath "/usr/sbin")
+            (subpath "/System")
+            (subpath "/Library/Preferences")
+            (subpath "\(tmpDir)")
+            (subpath "/dev")
+            (subpath "/Applications")
+        )
+        (deny file-read*
+            (subpath "/Users")
+            (regex #"/.ssh"#)
+            (regex #"/\\.gnupg"#)
+            (regex #"/Keychains"#)
+            (regex #"/credentials"#)
+            (regex #"/\\.aws"#)
+            (regex #"/\\.docker"#)
+            (regex #"/\\.kube"#)
+        )
+        (allow file-write*
+            (subpath "\(tmpDir)")
+            (literal "/dev/null")
+            (literal "/dev/zero")
+            (literal "/dev/random")
+            (literal "/dev/urandom")
+        )
+        (deny file-write*
+            (subpath "/System")
+            (subpath "/usr")
+            (subpath "/bin")
+            (subpath "/sbin")
+        )
+        (deny network*)
+        """
+    }
+
+    /// Creates a per-execution temporary directory with restrictive permissions (owner-only).
+    /// Returns the path to the created directory.
+    static func createSandboxTmpDir() throws -> String {
+        let baseDir = NSTemporaryDirectory()
+            .appending("com.mactimer.sandbox/")
+        let uniqueDir = baseDir.appending(UUID().uuidString)
+        try FileManager.default.createDirectory(
+            atPath: uniqueDir,
+            withIntermediateDirectories: true,
+            attributes: [.posixPermissions: 0o700]
+        )
+        return uniqueDir
+    }
+
+    /// Removes the per-execution temporary directory.
+    static func removeSandboxTmpDir(_ path: String) {
+        try? FileManager.default.removeItem(atPath: path)
+    }
 
     func execute(task: TaskItem, taskName: String) async -> ExecutionOutcome {
         switch task.taskType {
@@ -229,11 +247,27 @@ final class TaskExecutor {
         shellAuditLog.info("Shell command executing: \(command, privacy: .public)")
 
         let start = Date()
+
+        // Create a per-execution temporary directory with restrictive permissions
+        let sandboxTmpDir: String
+        do {
+            sandboxTmpDir = try Self.createSandboxTmpDir()
+        } catch {
+            return ExecutionOutcome(result: .failure, errorMessage: "无法创建沙箱临时目录: \(error.localizedDescription)", duration: 0)
+        }
+        defer { Self.removeSandboxTmpDir(sandboxTmpDir) }
+
         let process = Process()
 
         // Always run the command inside a sandbox using sandbox-exec
+        let profile = Self.sandboxProfile(tmpDir: sandboxTmpDir)
         process.executableURL = URL(fileURLWithPath: "/usr/bin/sandbox-exec")
-        process.arguments = ["-p", Self.sandboxProfile, "/bin/zsh", "-c", command]
+        process.arguments = ["-p", profile, "/bin/zsh", "-c", command]
+
+        // Provide the sandboxed tmp dir as TMPDIR so commands use it naturally
+        var env = ProcessInfo.processInfo.environment
+        env["TMPDIR"] = sandboxTmpDir
+        process.environment = env
 
         let pipe = Pipe()
         process.standardOutput = pipe
