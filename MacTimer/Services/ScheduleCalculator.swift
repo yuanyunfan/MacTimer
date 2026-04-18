@@ -33,7 +33,7 @@ struct ScheduleCalculator {
             cal.timeZone = TimeZone.current
             // covers two full weeks, ensuring every weekday appears at least twice
             for dayOffset in 0..<ScheduleCalculator.maxLookAheadDays {
-                let candidate = cal.date(byAdding: .day, value: dayOffset, to: date)!
+                guard let candidate = cal.date(byAdding: .day, value: dayOffset, to: date) else { continue }
                 let isoWeekday = cal.component(.weekday, from: candidate)
                 // Calendar.weekday: 1=Sunday, 2=Monday … 7=Saturday
                 // Our stored weekdays: 1=Monday … 7=Sunday (ISO)
