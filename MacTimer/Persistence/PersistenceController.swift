@@ -39,6 +39,8 @@ struct PersistenceController {
         let theContainer = container
 
         var loadFailed = false
+        var didResetData = false
+        var retryFailureError: Error?
         let semaphore = DispatchSemaphore(value: 0)
 
         container.loadPersistentStores { description, error in
@@ -60,10 +62,10 @@ struct PersistenceController {
                     if let retryError = retryError {
                         NSLog("CoreData: failed to load persistent store after reset: \(retryError)")
                         loadFailed = true
-                        PersistenceController.showStoreResetFailureAlert(error: retryError)
+                        retryFailureError = retryError
                     } else {
                         NSLog("CoreData: successfully recreated persistent store after removing corrupted data")
-                        PersistenceController.showDataResetAlert()
+                        didResetData = true
                     }
                     retrySemaphore.signal()
                 }
@@ -72,6 +74,13 @@ struct PersistenceController {
             semaphore.signal()
         }
         semaphore.wait()
+
+        // Show alerts after semaphores are released to avoid deadlocking the main thread
+        if let retryError = retryFailureError {
+            PersistenceController.showStoreResetFailureAlert(error: retryError)
+        } else if didResetData {
+            PersistenceController.showDataResetAlert()
+        }
 
         storeLoadFailed = loadFailed
         if !loadFailed {
