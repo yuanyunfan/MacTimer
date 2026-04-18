@@ -83,6 +83,19 @@ final class SchedulerService: ObservableObject {
         ) else {
             if let error = task.schedule.validationError() {
                 NSLog("SchedulerService: task '\(task.name)' has invalid schedule config – \(error)")
+            } else if task.schedule.type == .once {
+                // Once-type task whose date is in the past: auto-disable and notify
+                NSLog("SchedulerService: once-task '\(task.name)' date is in the past, auto-disabling")
+                task.isEnabled = false
+                task.nextRunAt = nil
+                saveContext()
+                let taskName = task.name
+                Task { @MainActor in
+                    await NotificationService.shared.sendError(
+                        taskName: taskName,
+                        message: "任务的计划时间已过，已自动禁用"
+                    )
+                }
             }
             return
         }
