@@ -44,13 +44,25 @@ final class SchedulerService: ObservableObject {
 
     deinit {
         if let observer = sleepWakeObserver {
-            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+            let captured = observer
+            if Thread.isMainThread {
+                NSWorkspace.shared.notificationCenter.removeObserver(captured)
+            } else {
+                DispatchQueue.main.async {
+                    NSWorkspace.shared.notificationCenter.removeObserver(captured)
+                }
+            }
         }
     }
 
     func stop() {
         activeTimers.values.forEach { $0.invalidate() }
         activeTimers.removeAll()
+        if let observer = sleepWakeObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+            sleepWakeObserver = nil
+            observingSleepWake = false
+        }
     }
 
     func reschedule(task: TaskItem) {
