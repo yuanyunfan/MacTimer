@@ -50,6 +50,11 @@ struct PersistenceController {
                     PersistenceController.removeStoreFiles(at: storeURL)
                 }
 
+                // Remove any existing stores from the coordinator before retrying
+                for store in theContainer.persistentStoreCoordinator.persistentStores {
+                    try? theContainer.persistentStoreCoordinator.remove(store)
+                }
+
                 let retrySemaphore = DispatchSemaphore(value: 0)
                 theContainer.loadPersistentStores { _, retryError in
                     if let retryError = retryError {
