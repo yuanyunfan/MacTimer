@@ -15,7 +15,7 @@ final class SchedulerService: ObservableObject {
 
     /// Tracks whether sleep/wake observers have been registered
     private var observingSleepWake = false
-    private var sleepWakeObserver: NSObjectProtocol?
+    nonisolated(unsafe) private var sleepWakeObserver: NSObjectProtocol?
 
     /// Tracks task IDs currently being executed to prevent duplicate execution
     /// (e.g. race between RunLoop-fired timer and wake handler)
