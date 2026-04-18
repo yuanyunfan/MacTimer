@@ -174,10 +174,8 @@ final class TaskExecutor {
             (subpath "/sbin")
             (subpath "/usr/sbin")
             (subpath "/System")
-            (subpath "/Library/Preferences")
             (subpath "\(tmpDir)")
             (subpath "/dev")
-            (subpath "/Applications")
         )
         (deny file-read*
             (subpath "/Users")
