@@ -65,6 +65,11 @@ final class TaskExecutor {
             return "命令为空"
         }
 
+        // Reject commands containing embedded newlines (can chain commands)
+        if trimmed.contains("\n") || trimmed.contains("\r") {
+            return "命令被安全策略拒绝：包含不允许的 shell 元字符 - 换行符（命令链接）"
+        }
+
         // Normalize for pattern matching: collapse whitespace, lowercase
         let normalized = trimmed
             .components(separatedBy: .whitespacesAndNewlines)
@@ -72,17 +77,10 @@ final class TaskExecutor {
             .joined(separator: " ")
             .lowercased()
 
-        // --- Allowlist check ---
-        // Extract the base command name (first token, stripped of any path prefix).
-        let firstToken = normalized.components(separatedBy: " ").first ?? ""
-        let baseName = (firstToken as NSString).lastPathComponent
-
-        if !allowedCommands.contains(baseName) {
-            return "命令被安全策略拒绝：不允许执行 \(baseName)（仅允许白名单中的命令）"
-        }
-
         // --- Reject shell metacharacters that enable command chaining/substitution ---
+        // Check these BEFORE the allowlist so chained commands cannot bypass validation.
         let shellMetacharacters: [(pattern: String, description: String)] = [
+            (#"\n"#, "换行符（命令链接）"),
             (#";"#, "分号（命令链接）"),
             (#"\|"#, "管道符"),
             (#"&&"#, "逻辑与（命令链接）"),
@@ -99,6 +97,15 @@ final class TaskExecutor {
                regex.firstMatch(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed)) != nil {
                 return "命令被安全策略拒绝：包含不允许的 shell 元字符 - \(description)"
             }
+        }
+
+        // --- Allowlist check ---
+        // Extract the base command name (first token, stripped of any path prefix).
+        let firstToken = normalized.components(separatedBy: " ").first ?? ""
+        let baseName = (firstToken as NSString).lastPathComponent
+
+        if !allowedCommands.contains(baseName) {
+            return "命令被安全策略拒绝：不允许执行 \(baseName)（仅允许白名单中的命令）"
         }
 
         // --- Additional regex-based checks (defense-in-depth) ---
