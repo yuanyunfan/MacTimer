@@ -27,6 +27,9 @@ struct PersistenceController {
 
     let container: NSPersistentContainer
 
+    /// Indicates whether the persistent store failed to load and the app is non-functional.
+    let storeLoadFailed: Bool
+
     init(inMemory: Bool = false) {
         container = NSPersistentContainer(name: "MacTimer")
         if inMemory {
@@ -34,6 +37,10 @@ struct PersistenceController {
         }
         let storeURL = container.persistentStoreDescriptions.first?.url
         let theContainer = container
+
+        var loadFailed = false
+        let semaphore = DispatchSemaphore(value: 0)
+
         container.loadPersistentStores { description, error in
             if let error = error {
                 NSLog("CoreData: failed to load persistent store: \(error)")
@@ -42,18 +49,29 @@ struct PersistenceController {
                     PersistenceController.backupStoreFiles(at: storeURL)
                     PersistenceController.removeStoreFiles(at: storeURL)
                 }
+
+                let retrySemaphore = DispatchSemaphore(value: 0)
                 theContainer.loadPersistentStores { _, retryError in
                     if let retryError = retryError {
                         NSLog("CoreData: failed to load persistent store after reset: \(retryError)")
+                        loadFailed = true
                         PersistenceController.showStoreResetFailureAlert(error: retryError)
                     } else {
                         NSLog("CoreData: successfully recreated persistent store after removing corrupted data")
                         PersistenceController.showDataResetAlert()
                     }
+                    retrySemaphore.signal()
                 }
+                retrySemaphore.wait()
             }
+            semaphore.signal()
         }
-        container.viewContext.automaticallyMergesChangesFromParent = true
+        semaphore.wait()
+
+        storeLoadFailed = loadFailed
+        if !loadFailed {
+            container.viewContext.automaticallyMergesChangesFromParent = true
+        }
     }
 
     /// Back up the SQLite store file and its companion files before deletion.
