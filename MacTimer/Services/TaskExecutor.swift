@@ -271,8 +271,15 @@ final class TaskExecutor {
         let sanitizedCommand = command.trimmingCharacters(in: .whitespacesAndNewlines)
         process.arguments = ["-p", profile, "/bin/zsh", "-c", sanitizedCommand]
 
-        // Provide the sandboxed tmp dir as TMPDIR so commands use it naturally
-        var env = ProcessInfo.processInfo.environment
+        // Provide a minimal environment to avoid leaking sensitive variables
+        let fullEnv = ProcessInfo.processInfo.environment
+        var env: [String: String] = [:]
+        let allowedKeys = ["PATH", "HOME", "TMPDIR", "LANG", "LC_ALL", "LC_CTYPE", "USER", "LOGNAME", "SHELL"]
+        for key in allowedKeys {
+            if let value = fullEnv[key] {
+                env[key] = value
+            }
+        }
         env["TMPDIR"] = sandboxTmpDir
         process.environment = env
 
